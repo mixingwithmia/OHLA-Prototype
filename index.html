@@ -20,12 +20,10 @@
     }
     
     .ambient {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: radial-gradient(circle at 30% 20%, rgba(142, 69, 133, 0.15) 0%, transparent 50%),
                   radial-gradient(circle at 70% 80%, rgba(78, 205, 196, 0.1) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 0;
+      pointer-events: none; z-index: 0;
     }
     
     .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; }
@@ -33,9 +31,16 @@
     
     h1 {
       font-size: 48px; font-weight: 200; letter-spacing: 16px;
-      background: linear-gradient(90deg, #8E4585 0%, #C9A227 50%, #4ECDC4 100%);
+      background: linear-gradient(90deg, #FF6B6B, #FF8E53, #FFCD38, #4ECDC4, #A855F7, #FF6B6B);
+      background-size: 200% 100%;
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text; text-transform: uppercase;
+      animation: rainbowFlow 4s linear infinite;
+    }
+    
+    @keyframes rainbowFlow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
     }
     
     .subtitle { font-size: 12px; letter-spacing: 4px; color: rgba(255,255,255,0.5); margin-top: 8px; text-transform: uppercase; }
@@ -68,9 +73,32 @@
     .fader-bank { display: flex; justify-content: center; gap: 24px; padding: 32px; background: rgba(0,0,0,0.3); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
     .fader-channel { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; border-radius: 12px; transition: all 0.3s ease; }
     .fader-channel.haptic { animation: hapticShake 0.1s ease-in-out infinite; }
+    .pan-knob.haptic { animation: knobShake 0.1s ease-in-out infinite; border-color: #FF4444 !important; }
+    @keyframes knobShake { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
     .channel-name { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
     
-    .fader-track { position: relative; width: 60px; height: 320px; background: rgba(0,0,0,0.6); border-radius: 8px; overflow: hidden; cursor: pointer; }
+    /* PAN KNOB STYLES */
+    .pan-container { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 8px; }
+    .pan-label { font-size: 8px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; }
+    .pan-knob {
+      width: 44px; height: 44px; border-radius: 50%; cursor: grab;
+      background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+      border: 2px solid #555; position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+      touch-action: none;
+    }
+    .pan-knob:hover { border-color: #777; }
+    .pan-knob:active { cursor: grabbing; }
+    .pan-indicator {
+      position: absolute; top: 4px; left: 50%; width: 3px; height: 12px;
+      background: #fff; border-radius: 2px; transform-origin: bottom center;
+      transform: translateX(-50%);
+    }
+    .pan-value { font-size: 10px; color: rgba(255,255,255,0.6); font-weight: 500; min-width: 28px; text-align: center; }
+    .pan-lr { display: flex; justify-content: space-between; width: 44px; font-size: 7px; color: rgba(255,255,255,0.3); }
+    
+    /* FADER STYLES */
+    .fader-track { position: relative; width: 60px; height: 280px; background: rgba(0,0,0,0.6); border-radius: 8px; overflow: hidden; cursor: pointer; }
     .spectrum-container { position: absolute; bottom: 0; left: 0; right: 0; height: 100%; display: flex; align-items: flex-end; padding: 0 4px; gap: 1px; pointer-events: none; z-index: 1; }
     .spectrum-bar { flex: 1; border-radius: 2px 2px 0 0; transition: height 0.05s ease; min-height: 2px; }
     
@@ -85,10 +113,10 @@
     
     .grip-lines { display: flex; gap: 3px; }
     .grip-line { width: 2px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 1px; }
-    .db-scale { position: absolute; right: 2px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; font-size: 7px; color: rgba(255,255,255,0.3); padding: 4px 0; pointer-events: none; }
+    .db-scale { position: absolute; right: 2px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; font-size: 7px; color: rgba(255,255,255,0.3); padding: 4px 0; pointer-events: none; z-index: 2; }
     
-    .mask-indicator { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); padding: 4px 8px; background: #FF4444; border-radius: 4px; font-size: 9px; font-weight: bold; animation: pulse 0.3s ease-in-out infinite; z-index: 20; }
-    .tactile-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+    .mask-indicator { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); padding: 4px 8px; background: #FF4444; border-radius: 4px; font-size: 9px; font-weight: bold; animation: pulse 0.3s ease-in-out infinite; z-index: 20; white-space: nowrap; }
+    .tactile-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 3; }
     .tactile-indicator .icon { font-size: 24px; margin-bottom: 4px; }
     .tactile-indicator .label { font-size: 9px; color: rgba(255,255,255,0.5); }
     
@@ -102,7 +130,7 @@
     
     .info-panel { margin-top: 32px; padding: 24px; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
     .panel-title { font-size: 14px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #8E4585; margin-bottom: 16px; }
-    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.6; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.6; }
     .feature strong { display: block; margin-bottom: 4px; }
     
     .specs-panel { margin-top: 24px; padding: 24px; background: rgba(142, 69, 133, 0.1); border-radius: 12px; border: 1px solid rgba(142, 69, 133, 0.2); }
@@ -114,13 +142,15 @@
     
     .mode-deaf .fader-track { background: #000; border: 3px solid #fff; }
     .mode-deaf .fader-channel { border: 1px solid #fff; }
+    .mode-deaf .pan-knob { border: 3px solid #fff; }
     
     @media (max-width: 600px) {
       h1 { font-size: 32px; letter-spacing: 8px; }
-      .fader-track { height: 280px; width: 50px; }
+      .fader-track { height: 240px; width: 50px; }
       .fader-cap { width: 44px; height: 24px; }
       .fader-bank { gap: 12px; padding: 16px; }
       .mode-btn { padding: 8px 12px; font-size: 10px; }
+      .pan-knob { width: 38px; height: 38px; }
     }
   </style>
 </head>
@@ -154,10 +184,10 @@
     <div class="info-panel">
       <h3 class="panel-title">Prototype Features</h3>
       <div class="features-grid">
-        <div class="feature"><strong style="color: #4ECDC4">Real-Time FFT Display</strong><p>90mm × 8mm flexible OLED embedded in fader track shows 24-band spectral analysis.</p></div>
-        <div class="feature"><strong style="color: #FF6B35">Haptic Masking Alerts</strong><p>Dual LRA motors vibrate when frequency overlap detected. Try setting Kick and Bass to similar levels!</p></div>
-        <div class="feature"><strong style="color: #A855F7">Accessibility Modes</strong><p>5 display modes: Standard, Tactile-only, High-contrast, Colorblind-safe, and Synesthesia.</p></div>
-        <div class="feature"><strong style="color: #C9A227">Sub-50ms Latency</strong><p>ARM Cortex-M7 DSP with CMSIS-DSP library. TDM bus for inter-unit communication.</p></div>
+        <div class="feature"><strong style="color: #4ECDC4">Real-Time FFT Display</strong><p>90mm × 8mm flexible OLED in fader track shows 24-band spectral analysis per channel.</p></div>
+        <div class="feature"><strong style="color: #FF6B35">Haptic Masking Alerts</strong><p>Compares ALL channels. Any overlapping frequencies trigger haptic alerts on both faders.</p></div>
+        <div class="feature"><strong style="color: #A855F7">Pan Knobs with Haptic Detents</strong><p>Rotary pan control with center detent feedback. Feel center position without looking.</p></div>
+        <div class="feature"><strong style="color: #C9A227">5 Accessibility Modes</strong><p>Standard, Tactile (Blind), High Contrast (Deaf), Colorblind Safe, and Synesthesia.</p></div>
       </div>
     </div>
     
@@ -166,9 +196,9 @@
       <div class="specs-grid">
         <div><strong>Display:</strong> 90×8mm Flexible AMOLED</div>
         <div><strong>Fader:</strong> 100mm travel, 10kΩ</div>
-        <div><strong>Haptics:</strong> 2× LRA motors, 175Hz</div>
+        <div><strong>Haptics:</strong> 2× LRA motors per fader</div>
+        <div><strong>Pan Knob:</strong> Endless encoder w/ haptic detent</div>
         <div><strong>DSP:</strong> ARM Cortex-M7 @ 480MHz</div>
-        <div><strong>FFT:</strong> 1024-point, 24 Bark bands</div>
         <div><strong>Latency:</strong> &lt;50ms total</div>
       </div>
     </div>
@@ -177,15 +207,19 @@
   </div>
 
   <script>
+    // Channel data - now with pan
     const faders = [
-      { id: 0, name: 'Kick', value: 75, color: '#FF6B35', muted: false, solo: false },
-      { id: 1, name: 'Bass', value: 68, color: '#4ECDC4', muted: false, solo: false },
-      { id: 2, name: 'Synth', value: 55, color: '#A855F7', muted: false, solo: false },
-      { id: 3, name: 'Vocal', value: 82, color: '#F59E0B', muted: false, solo: false },
+      { id: 0, name: 'Kick', value: 75, pan: 0, color: '#FF6B35', muted: false, solo: false, freqRange: [0, 6] },
+      { id: 1, name: 'Bass', value: 68, pan: 0, color: '#4ECDC4', muted: false, solo: false, freqRange: [2, 10] },
+      { id: 2, name: 'Synth', value: 55, pan: -30, color: '#A855F7', muted: false, solo: false, freqRange: [8, 18] },
+      { id: 3, name: 'Vocal', value: 82, pan: 15, color: '#F59E0B', muted: false, solo: false, freqRange: [10, 22] },
     ];
     
-    let mode = 'standard', showMasking = true, time = 0, hapticPulse = {}, dragging = null;
-    let hapticsEnabled = false, audioCtx = null, buzzOscillator = null, buzzGain = null, lastMaskingState = false;
+    let mode = 'standard', showMasking = true, time = 0;
+    let maskingPairs = {}; // Tracks which channel pairs are masking (frequency)
+    let panClashPairs = {}; // Tracks which channel pairs have pan clashes
+    let draggingFader = null, draggingKnob = null;
+    let hapticsEnabled = false, audioCtx = null, buzzOscillator = null, buzzGain = null;
     const cbSafe = ['#0077BB', '#EE7733', '#009988', '#CC3311'];
     
     function getColor(baseColor, index) {
@@ -197,33 +231,111 @@
     function getSpectrumColor(baseColor, bandIndex) {
       if (mode === 'blind') return 'transparent';
       if (mode === 'synesthesia') return `hsl(${(bandIndex * 15 + time * 3) % 360}, 90%, 55%)`;
-      if (mode === 'colorblind') return baseColor;
+      return baseColor;
+    }
+    
+    function getPanColor(pan, baseColor, index) {
+      if (mode === 'synesthesia') {
+        // Left = blue/purple, Center = green, Right = orange/red
+        const hue = 120 + (pan * 1.2); // -100 to 100 maps to ~0 to ~240
+        return `hsl(${hue}, 80%, 55%)`;
+      }
       return baseColor;
     }
     
     function generateSpectrum(fader, index) {
-      const spectrum = [], baseFreq = index === 0 ? 0 : index === 1 ? 2 : index === 2 ? 8 : 12;
+      const spectrum = [];
+      const [freqStart, freqEnd] = fader.freqRange;
+      const center = (freqStart + freqEnd) / 2;
       for (let i = 0; i < 24; i++) {
-        const distance = Math.abs(i - baseFreq - 4);
-        const peak = Math.max(0, 1 - distance * 0.15);
-        const noise = Math.sin(time * 0.3 + i * 0.5 + index) * 0.15;
+        const distance = Math.abs(i - center);
+        const width = (freqEnd - freqStart) / 2;
+        const peak = Math.max(0, 1 - (distance / width) * 0.8);
+        const noise = Math.sin(time * 0.3 + i * 0.5 + index) * 0.12;
         const value = (peak + noise) * (fader.value / 100) * (fader.muted ? 0.1 : 1);
-        spectrum.push(Math.max(0.05, Math.min(1, value)));
+        spectrum.push(Math.max(0.02, Math.min(1, value)));
       }
       return spectrum;
     }
     
+    // Check masking between ALL channel pairs
     function checkMasking() {
-      const overlap = Math.abs(faders[0].value - faders[1].value) < 20 && !faders[0].muted && !faders[1].muted && showMasking;
-      if (overlap && !lastMaskingState) {
-        hapticPulse = { 0: true, 1: true };
-        triggerMaskingAlert();
-        lastMaskingState = true;
-      } else if (!overlap) {
-        hapticPulse = {};
-        stopMaskingAlert();
-        lastMaskingState = false;
+      const newMaskingPairs = {};
+      const newPanClashPairs = {};
+      
+      if (!showMasking) {
+        maskingPairs = {};
+        panClashPairs = {};
+        return;
       }
+      
+      // Compare every pair of channels
+      for (let i = 0; i < faders.length; i++) {
+        for (let j = i + 1; j < faders.length; j++) {
+          const a = faders[i], b = faders[j];
+          
+          // Skip if either is muted
+          if (a.muted || b.muted) continue;
+          
+          // Check frequency overlap
+          const freqOverlap = !(a.freqRange[1] < b.freqRange[0] || b.freqRange[1] < a.freqRange[0]);
+          
+          // Check level similarity (within 25 of each other)
+          const levelSimilar = Math.abs(a.value - b.value) < 25;
+          
+          // Check pan clash (within 30 of each other in the stereo field)
+          const panClose = Math.abs(a.pan - b.pan) < 30;
+          
+          const key = `${i}-${j}`;
+          
+          // Frequency masking: frequencies overlap + similar levels
+          if (freqOverlap && levelSimilar) {
+            newMaskingPairs[key] = true;
+            
+            if (!maskingPairs[key]) {
+              triggerMaskingAlert();
+            }
+          }
+          
+          // Pan clash: frequencies overlap + panned to same spot
+          if (freqOverlap && panClose && levelSimilar) {
+            newPanClashPairs[key] = true;
+            
+            if (!panClashPairs[key]) {
+              triggerPanClashAlert();
+            }
+          }
+        }
+      }
+      
+      if (Object.keys(newMaskingPairs).length === 0 && Object.keys(maskingPairs).length > 0) {
+        stopMaskingAlert();
+      }
+      
+      maskingPairs = newMaskingPairs;
+      panClashPairs = newPanClashPairs;
+    }
+    
+    // Get channels that have pan clash with a given channel
+    function getPanClashPartners(index) {
+      const partners = [];
+      for (const key in panClashPairs) {
+        const [a, b] = key.split('-').map(Number);
+        if (a === index) partners.push(faders[b].name);
+        if (b === index) partners.push(faders[a].name);
+      }
+      return partners;
+    }
+    
+    // Get channels that are masking with a given channel
+    function getMaskingPartners(index) {
+      const partners = [];
+      for (const key in maskingPairs) {
+        const [a, b] = key.split('-').map(Number);
+        if (a === index) partners.push(faders[b].name);
+        if (b === index) partners.push(faders[a].name);
+      }
+      return partners;
     }
     
     function initAudio() {
@@ -248,11 +360,27 @@
         buzzGain.gain.linearRampToValueAtTime(0.12, now + 0.05);
         buzzGain.gain.linearRampToValueAtTime(0.04, now + 0.1);
         buzzGain.gain.linearRampToValueAtTime(0.12, now + 0.15);
-        buzzGain.gain.linearRampToValueAtTime(0.04, now + 0.2);
-        buzzGain.gain.linearRampToValueAtTime(0.12, now + 0.25);
-        buzzGain.gain.linearRampToValueAtTime(0, now + 0.35);
+        buzzGain.gain.linearRampToValueAtTime(0, now + 0.25);
       }
-      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100]);
+      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
+    }
+    
+    function triggerPanClashAlert() {
+      if (!hapticsEnabled) return;
+      // Different sound for pan clash - higher pitch, shorter
+      if (audioCtx) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = 200;
+        gain.gain.value = 0.08;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
+        osc.stop(audioCtx.currentTime + 0.15);
+      }
+      if ('vibrate' in navigator) navigator.vibrate([50, 30, 50, 30, 50]);
     }
     
     function stopMaskingAlert() {
@@ -262,15 +390,45 @@
       }
     }
     
+    function triggerCenterDetent() {
+      if (!hapticsEnabled) return;
+      if ('vibrate' in navigator) navigator.vibrate(40);
+      if (audioCtx) {
+        const click = audioCtx.createOscillator();
+        const clickGain = audioCtx.createGain();
+        click.frequency.value = 1200;
+        clickGain.gain.value = 0.08;
+        click.connect(clickGain);
+        clickGain.connect(audioCtx.destination);
+        click.start();
+        click.stop(audioCtx.currentTime + 0.02);
+      }
+    }
+    
+    function triggerEdgeDetent() {
+      if (!hapticsEnabled) return;
+      if ('vibrate' in navigator) navigator.vibrate(25);
+      if (audioCtx) {
+        const click = audioCtx.createOscillator();
+        const clickGain = audioCtx.createGain();
+        click.frequency.value = 600;
+        clickGain.gain.value = 0.04;
+        click.connect(clickGain);
+        clickGain.connect(audioCtx.destination);
+        click.start();
+        click.stop(audioCtx.currentTime + 0.015);
+      }
+    }
+    
     function triggerDragFeedback() {
       if (!hapticsEnabled) return;
-      if ('vibrate' in navigator) navigator.vibrate(15);
-      if (audioCtx) {
-        const click = audioCtx.createOscillator(), clickGain = audioCtx.createGain();
-        click.frequency.value = 800; clickGain.gain.value = 0.02;
-        click.connect(clickGain); clickGain.connect(audioCtx.destination);
-        click.start(); click.stop(audioCtx.currentTime + 0.015);
-      }
+      if ('vibrate' in navigator) navigator.vibrate(10);
+    }
+    
+    function formatPan(pan) {
+      if (Math.abs(pan) < 3) return 'C';
+      if (pan < 0) return `L${Math.abs(Math.round(pan))}`;
+      return `R${Math.round(pan)}`;
     }
     
     function buildFaders() {
@@ -282,13 +440,20 @@
         channel.id = `channel-${index}`;
         channel.innerHTML = `
           <div class="channel-name">${fader.name}</div>
+          <div class="pan-container">
+            <div class="pan-lr"><span>L</span><span>R</span></div>
+            <div class="pan-knob" id="knob-${index}" data-id="${index}">
+              <div class="pan-indicator" id="indicator-${index}"></div>
+            </div>
+            <div class="pan-value" id="pan-value-${index}">${formatPan(fader.pan)}</div>
+          </div>
           <div class="fader-track" id="track-${index}">
             <div class="spectrum-container" id="spectrum-${index}"></div>
             <div class="fader-cap" id="cap-${index}">
               <div class="grip-lines"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div>
             </div>
             <div class="db-scale"><span>+10</span><span>0</span><span>-∞</span></div>
-            <div class="mask-indicator" id="mask-${index}" style="display:none;">⚠ MASK</div>
+            <div class="mask-indicator" id="mask-${index}" style="display:none;"></div>
             <div class="tactile-indicator" id="tactile-${index}" style="display:none;"><div class="icon">○</div><div class="label">TACTILE</div></div>
           </div>
           <div class="fader-value" id="value-${index}">${fader.value}</div>
@@ -300,6 +465,7 @@
         bank.appendChild(channel);
       });
       
+      // Mute buttons
       document.querySelectorAll('.btn-mute').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const id = parseInt(e.target.dataset.id);
@@ -309,6 +475,7 @@
         });
       });
       
+      // Solo buttons
       document.querySelectorAll('.btn-solo').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const id = parseInt(e.target.dataset.id);
@@ -322,91 +489,201 @@
       faders.forEach((fader, index) => {
         const color = getColor(fader.color, index);
         const spectrum = generateSpectrum(fader, index);
-        const isHaptic = hapticPulse[index];
+        const maskingPartners = getMaskingPartners(index);
+        const isMasking = maskingPartners.length > 0;
+        
+        const panClashPartners = getPanClashPartners(index);
+        const hasPanClash = panClashPartners.length > 0;
         
         const channel = document.getElementById(`channel-${index}`);
-        channel.className = `fader-channel ${isHaptic ? 'haptic' : ''} ${mode === 'deaf' ? 'mode-deaf' : ''}`;
+        channel.className = `fader-channel ${isMasking ? 'haptic' : ''} ${mode === 'deaf' ? 'mode-deaf' : ''}`;
         channel.style.border = `1px solid ${mode === 'deaf' ? '#fff' : 'rgba(255,255,255,0.1)'}`;
         channel.querySelector('.channel-name').style.color = color;
         
+        // Update pan knob - add shake if pan clash
+        const knob = document.getElementById(`knob-${index}`);
+        knob.className = `pan-knob ${hasPanClash ? 'haptic' : ''}`;
+        const indicator = document.getElementById(`indicator-${index}`);
+        const panColor = getPanColor(fader.pan, color, index);
+        knob.style.borderColor = panColor;
+        indicator.style.background = panColor;
+        indicator.style.transform = `translateX(-50%) rotate(${fader.pan * 1.35}deg)`;
+        document.getElementById(`pan-value-${index}`).textContent = formatPan(fader.pan);
+        
+        // Update fader track
         const track = document.getElementById(`track-${index}`);
         track.style.borderColor = `${color}33`;
         track.style.boxShadow = `0 0 20px ${color}22, inset 0 0 30px rgba(0,0,0,0.5)`;
         
+        // Update spectrum bars
         const spectrumContainer = document.getElementById(`spectrum-${index}`);
         let barsHTML = '';
         for (let i = 0; i < spectrum.length; i++) {
           const barColor = getSpectrumColor(color, i);
-          const heightPct = Math.max(5, spectrum[i] * 100);
+          const heightPct = Math.max(3, spectrum[i] * 100);
           barsHTML += `<div class="spectrum-bar" style="height: ${heightPct}%; background: ${barColor};"></div>`;
         }
         spectrumContainer.innerHTML = barsHTML;
         
+        // Update fader cap
         const cap = document.getElementById(`cap-${index}`);
         cap.style.bottom = `${fader.value}%`;
         cap.style.border = `2px solid ${color}`;
         cap.style.boxShadow = `0 2px 8px rgba(0,0,0,0.5), 0 0 10px ${color}44`;
         
         document.getElementById(`value-${index}`).textContent = fader.value;
-        document.getElementById(`mask-${index}`).style.display = isHaptic ? 'block' : 'none';
         
+        // Update mask indicator - show which channels are conflicting
+        const maskEl = document.getElementById(`mask-${index}`);
+        if (isMasking) {
+          maskEl.style.display = 'block';
+          maskEl.textContent = `⚠ ${maskingPartners.join(', ')}`;
+        } else {
+          maskEl.style.display = 'none';
+        }
+        
+        // Update tactile indicator
         const tactileEl = document.getElementById(`tactile-${index}`);
         tactileEl.style.display = mode === 'blind' ? 'block' : 'none';
-        if (mode === 'blind') tactileEl.querySelector('.icon').textContent = isHaptic ? '◉◉◉' : '○';
+        if (mode === 'blind') tactileEl.querySelector('.icon').textContent = isMasking ? '◉◉◉' : '○';
       });
     }
     
-    // Mouse drag
+    // FADER DRAG - Mouse
     document.addEventListener('mousedown', (e) => {
       const track = e.target.closest('.fader-track');
       if (track) {
         const id = parseInt(track.id.split('-')[1]);
-        dragging = { id, rect: track.getBoundingClientRect() };
+        draggingFader = { id, rect: track.getBoundingClientRect() };
         document.body.style.cursor = 'grabbing';
-        const pct = 100 - ((e.clientY - dragging.rect.top) / dragging.rect.height * 100);
+        const pct = 100 - ((e.clientY - draggingFader.rect.top) / draggingFader.rect.height * 100);
         faders[id].value = Math.max(0, Math.min(100, Math.round(pct)));
-        checkMasking(); updateDisplay();
+        checkMasking();
+        updateDisplay();
+        e.preventDefault();
+      }
+      
+      const knob = e.target.closest('.pan-knob');
+      if (knob) {
+        const id = parseInt(knob.dataset.id);
+        const rect = knob.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        draggingKnob = { id, centerX, centerY, startPan: faders[id].pan, startAngle: Math.atan2(e.clientY - centerY, e.clientX - centerX) };
+        document.body.style.cursor = 'grabbing';
         e.preventDefault();
       }
     });
     
     document.addEventListener('mousemove', (e) => {
-      if (dragging) {
-        const pct = 100 - ((e.clientY - dragging.rect.top) / dragging.rect.height * 100);
+      if (draggingFader) {
+        const { id, rect } = draggingFader;
+        const pct = 100 - ((e.clientY - rect.top) / rect.height * 100);
         const newValue = Math.max(0, Math.min(100, Math.round(pct)));
-        if (Math.abs(newValue - faders[dragging.id].value) >= 5) triggerDragFeedback();
-        faders[dragging.id].value = newValue;
-        checkMasking(); updateDisplay();
+        if (Math.abs(newValue - faders[id].value) >= 3) triggerDragFeedback();
+        faders[id].value = newValue;
+        checkMasking();
+        updateDisplay();
+      }
+      
+      if (draggingKnob) {
+        const { id, centerX, centerY, startPan, startAngle } = draggingKnob;
+        const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        const angleDiff = (currentAngle - startAngle) * (180 / Math.PI);
+        let newPan = startPan + angleDiff;
+        
+        // Clamp to -100 to 100
+        const oldPan = faders[id].pan;
+        newPan = Math.max(-100, Math.min(100, newPan));
+        
+        // Center detent
+        if (Math.abs(newPan) < 5 && Math.abs(oldPan) >= 5) {
+          newPan = 0;
+          triggerCenterDetent();
+        }
+        
+        // Edge detents
+        if ((newPan <= -95 && oldPan > -95) || (newPan >= 95 && oldPan < 95)) {
+          triggerEdgeDetent();
+        }
+        
+        faders[id].pan = newPan;
+        checkMasking();
+        updateDisplay();
       }
     });
     
-    document.addEventListener('mouseup', () => { dragging = null; document.body.style.cursor = 'default'; });
+    document.addEventListener('mouseup', () => {
+      draggingFader = null;
+      draggingKnob = null;
+      document.body.style.cursor = 'default';
+    });
     
-    // Touch drag
+    // TOUCH SUPPORT
     document.addEventListener('touchstart', (e) => {
       const track = e.target.closest('.fader-track');
       if (track) {
         const id = parseInt(track.id.split('-')[1]);
-        dragging = { id, rect: track.getBoundingClientRect() };
-        const pct = 100 - ((e.touches[0].clientY - dragging.rect.top) / dragging.rect.height * 100);
+        draggingFader = { id, rect: track.getBoundingClientRect() };
+        const pct = 100 - ((e.touches[0].clientY - draggingFader.rect.top) / draggingFader.rect.height * 100);
         faders[id].value = Math.max(0, Math.min(100, Math.round(pct)));
-        checkMasking(); updateDisplay();
+        checkMasking();
+        updateDisplay();
+        e.preventDefault();
+      }
+      
+      const knob = e.target.closest('.pan-knob');
+      if (knob) {
+        const id = parseInt(knob.dataset.id);
+        const rect = knob.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        draggingKnob = { id, centerX, centerY, startPan: faders[id].pan, startAngle: Math.atan2(e.touches[0].clientY - centerY, e.touches[0].clientX - centerX) };
         e.preventDefault();
       }
     }, { passive: false });
     
     document.addEventListener('touchmove', (e) => {
-      if (dragging) {
-        const pct = 100 - ((e.touches[0].clientY - dragging.rect.top) / dragging.rect.height * 100);
+      if (draggingFader) {
+        const { id, rect } = draggingFader;
+        const pct = 100 - ((e.touches[0].clientY - rect.top) / rect.height * 100);
         const newValue = Math.max(0, Math.min(100, Math.round(pct)));
-        if (Math.abs(newValue - faders[dragging.id].value) >= 5) triggerDragFeedback();
-        faders[dragging.id].value = newValue;
-        checkMasking(); updateDisplay();
+        if (Math.abs(newValue - faders[id].value) >= 3) triggerDragFeedback();
+        faders[id].value = newValue;
+        checkMasking();
+        updateDisplay();
+        e.preventDefault();
+      }
+      
+      if (draggingKnob) {
+        const { id, centerX, centerY, startPan, startAngle } = draggingKnob;
+        const currentAngle = Math.atan2(e.touches[0].clientY - centerY, e.touches[0].clientX - centerX);
+        const angleDiff = (currentAngle - startAngle) * (180 / Math.PI);
+        let newPan = startPan + angleDiff;
+        
+        const oldPan = faders[id].pan;
+        newPan = Math.max(-100, Math.min(100, newPan));
+        
+        if (Math.abs(newPan) < 5 && Math.abs(oldPan) >= 5) {
+          newPan = 0;
+          triggerCenterDetent();
+        }
+        
+        if ((newPan <= -95 && oldPan > -95) || (newPan >= 95 && oldPan < 95)) {
+          triggerEdgeDetent();
+        }
+        
+        faders[id].pan = newPan;
+        checkMasking();
+        updateDisplay();
         e.preventDefault();
       }
     }, { passive: false });
     
-    document.addEventListener('touchend', () => { dragging = null; });
+    document.addEventListener('touchend', () => {
+      draggingFader = null;
+      draggingKnob = null;
+    });
     
     // Mode buttons
     document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -417,7 +694,10 @@
       });
     });
     
-    document.getElementById('maskingToggle').addEventListener('change', (e) => { showMasking = e.target.checked; checkMasking(); });
+    document.getElementById('maskingToggle').addEventListener('change', (e) => {
+      showMasking = e.target.checked;
+      checkMasking();
+    });
     
     document.getElementById('hapticBtn').addEventListener('click', function() {
       hapticsEnabled = true;
@@ -427,16 +707,22 @@
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       if ('vibrate' in navigator) navigator.vibrate([30, 30, 30]);
       if (audioCtx) {
-        const test = audioCtx.createOscillator(), testGain = audioCtx.createGain();
-        test.frequency.value = 440; testGain.gain.value = 0.1;
-        test.connect(testGain); testGain.connect(audioCtx.destination);
-        test.start(); testGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+        const test = audioCtx.createOscillator();
+        const testGain = audioCtx.createGain();
+        test.frequency.value = 440;
+        testGain.gain.value = 0.1;
+        test.connect(testGain);
+        testGain.connect(audioCtx.destination);
+        test.start();
+        testGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
         test.stop(audioCtx.currentTime + 0.2);
       }
     });
     
     setInterval(() => { time++; updateDisplay(); }, 50);
-    buildFaders(); updateDisplay();
+    buildFaders();
+    checkMasking();
+    updateDisplay();
   </script>
 </body>
 </html>
