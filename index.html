@@ -1,134 +1,50 @@
-document.getElementById(id).classList.remove('active'); document.body.style.overflow=''; }
-document.addEventListener('keydown', e => { if(e.key==='Escape') { document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active')); document.body.style.overflow=''; }});
-
-const faders = [
-    { id:0, name:'Kick', value:75, pan:0, color:'#FF6B35', muted:false, solo:false, freqRange:[0,6] },
-        { id:1, name:'Bass', value:68, pan:0, color:'#4ECDC4', muted:false, solo:false, freqRange:[2,10] },
-            { id:2, name:'Synth', value:55, pan:-30, color:'#A855F7', muted:false, solo:false, freqRange:[8,18] },
-                { id:3, name:'Vocal', value:82, pan:15, color:'#F59E0B', muted:false, solo:false, freqRange:[10,22] }
-                ];
-
-                let mode='standard', showMasking=true, time=0, maskingPairs={}, panClashPairs={};
-                let draggingFader=null, draggingKnob=null, hapticsEnabled=false, audioCtx=null;
-                const cbSafe = ['#0077BB','#EE7733','#009988','#CC3311'];
-
-                function getColor(c,i) { return mode==='colorblind'?cbSafe[i%4]:mode==='synesthesia'?`hsl(${(i*90+time*2)%360},80%,55%)`:c; }
-                function getSpectrumColor(c,b) { return mode==='blind'?'transparent':mode==='synesthesia'?`hsl(${(b*15+time*3)%360},90%,55%)`:c; }
-
-                function generateSpectrum(f,idx) {
-                    const s=[], [fs,fe]=f.freqRange, ctr=(fs+fe)/2;
-                        for(let i=0;i<24;i++) { const d=Math.abs(i-ctr), w=(fe-fs)/2, pk=Math.max(0,1-(d/w)*0.8), n=Math.sin(time*0.3+i*0.5+idx)*0.12; s.push(Math.max(0.02,Math.min(1,(pk+n)*(f.value/100)*(f.muted?0.1:1)))); }
-                                return s;
-                            }
-
-                            function checkMasking() {
-                                const nm={}, np={};
-                                if(!showMasking) { maskingPairs={}; panClashPairs={}; return; }
-                                for(let i=0;i<faders.length;i++) for(let j=i+1;j<faders.length;j++) {
-                                                         const a=faders[i], b=faders[j];
-                                                         if(a.muted||b.muted) continue;
-                                                         const fo=!(a.freqRange[1]<b.freqRange[0]||b.freqRange[1]<a.freqRange[0]), ls=Math.abs(a.value-b.value)<25, pc=Math.abs(a.pan-b.pan)<30, k=`${i}-${j}`;
-                                                         if(fo&&ls) { nm[k]=true; if(!maskingPairs[k]) triggerMaskingAlert(); }
-                                                         if(fo&&pc&&ls) { np[k]=true; if(!panClashPairs[k]) triggerPanClashAlert(); }
-                                                     }
-                                                     if(!Object.keys(nm).length&&Object.keys(maskingPairs).length) stopMaskingAlert();
-                                                     maskingPairs=nm; panClashPairs=np;
-                                                 }
-
-                                                 function getMaskingPartners(i) { const p=[]; for(const k in maskingPairs) { const[a,b]=k.split('-').map(Number); if(a===i)p.push(faders[b].name); if(b===i)p.push(faders[a].name); } return p; }
-                                    function getPanClashPartners(i) { const p=[]; for(const k in panClashPairs) { const[a,b]=k.split('-').map(Number); if(a===i)p.push(faders[b].name); if(b===i)p.push(faders[a].name); } return p; }
-
-                                    function initAudio() { if(audioCtx) return; audioCtx=new(window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }
-
-                                    function triggerMaskingAlert() {
-                                        if(!hapticsEnabled) return;
-                                        if('vibrate' in navigator) navigator.vibrate([100,50,100]);
-                                        if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='sawtooth'; o.frequency.value=80; g.gain.setValueAtTime(0,audioCtx.currentTime); g.gain.linearRampToValueAtTime(0.12,audioCtx.currentTime+0.05); g.gain.linearRampToValueAtTime(0.04,audioCtx.currentTime+0.1); g.gain.linearRampToValueAtTime(0.12,audioCtx.currentTime+0.15); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.25); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.25); }
-                                    }
-                                    function triggerPanClashAlert() {
-                                        if(!hapticsEnabled) return;
-                                        if('vibrate' in navigator) navigator.vibrate([50,30,50,30,50]);
-                                        if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='square'; o.frequency.value=200; g.gain.value=0.08; o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.15); o.stop(audioCtx.currentTime+0.15); }
-                                    }
-                                    function stopMaskingAlert() {}
-                                    function triggerCenterDetent() {
-                                        if(!hapticsEnabled) return;
-                                        if('vibrate' in navigator) navigator.vibrate(40);
-                                        if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=1200; g.gain.setValueAtTime(0.08,audioCtx.currentTime); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.02); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.02); }
-                                    }
-                                    function triggerEdgeDetent() {
-                                        if(!hapticsEnabled) return;
-                                        if('vibrate' in navigator) navigator.vibrate(25);
-                                        if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=600; g.gain.setValueAtTime(0.04,audioCtx.currentTime); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.015); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.015); }
-                                    }
-                                    function triggerDragFeedback() { if(!hapticsEnabled) return; if('vibrate' in navigator) navigator.vibrate(10); }
-                                    function formatPan(p) { return Math.abs(p)<3?'C':p<0?`L${Math.abs(Math.round(p))}`:`R${Math.round(p)}`; }
-
-                                        function buildFaders() {
-                                            const bank=document.getElementById('faderBank'); if(!bank) return; bank.innerHTML='';
-                                            faders.forEach((f,i) => {
-                                                const ch=document.createElement('div'); ch.className='fader-channel'; ch.id=`channel-${i}`;
-                                                ch.innerHTML=`<div class="channel-name">${f.name}</div>div><div class="pan-container"><div class="pan-lr"><span>L</span><span>R</span></div>div><div class="pan-knob" id="knob-${i}" data-id="${i}"><div class="pan-indicator" id="indicator-${i}"></div>div></div>div><div class="pan-value" id="pan-value-${i}">${formatPan(f.pan)}</div>div></div>div><div class="fader-track" id="track-${i}"><div class="spectrum-container" id="spectrum-${i}"></div>div><div class="fader-cap" id="cap-${i}"><div class="grip-lines"><div class="grip-line"></div>div><div class="grip-line"></div>div><div class="grip-line"></div>div></div>div></div>div><div class="db-scale"><span>+10</span><span>0</span><span>-∞</span></div>div><div class="mask-indicator" id="mask-${i}" style="display:none;"></div>div><div class="tactile-indicator" id="tactile-${i}" style="display:none;"><div class="icon">○</div>div><div class="label">TACTILE</div>div></div>div></div>div><div class="fader-value" id="value-${i}">${f.value}</div>div><div class="channel-buttons"><button class="btn-mute" data-id="${i}">M</button>button><button class="btn-solo" data-id="${i}">S</button>button></div>div>`;
-                                            bank.appendChild(ch);
-                                        });
-                                        document.querySelectorAll('.btn-mute').forEach(b => b.onclick=e => { const id=+e.target.dataset.id; faders[id].muted=!faders[id].muted; e.target.classList.toggle('active',faders[id].muted); checkMasking(); });
-                                        document.querySelectorAll('.btn-solo').forEach(b => b.onclick=e => { const id=+e.target.dataset.id; faders[id].solo=!faders[id].solo; e.target.classList.toggle('active',faders[id].solo); });
-                                    }
-                                    
-                                    function updateDisplay() {
-                                        faders.forEach((f,i) => {
-                                            const color=getColor(f.color,i), spectrum=generateSpectrum(f,i), mp=getMaskingPartners(i), isMasking=mp.length>0, pcp=getPanClashPartners(i), hasPanClash=pcp.length>0;
-                                            const ch=document.getElementById(`channel-${i}`); if(!ch) return;
-                                            ch.className=`fader-channel ${isMasking?'haptic':''} ${mode==='deaf'?'mode-deaf':''}`;
-                                            ch.style.borderColor=mode==='deaf'?'#fff':'rgba(255,255,255,0.08)';
-                                            ch.querySelector('.channel-name').style.color=color;
-                                            const knob=document.getElementById(`knob-${i}`); knob.className=`pan-knob ${hasPanClash?'haptic':''}`;
-                                            const ind=document.getElementById(`indicator-${i}`); knob.style.borderColor=color; ind.style.background=color; ind.style.transform=`translateX(-50%) rotate(${f.pan*1.35}deg)`;
-                                            document.getElementById(`pan-value-${i}`).textContent=formatPan(f.pan);
-                                            const track=document.getElementById(`track-${i}`); track.style.borderColor=`${color}33`; track.style.boxShadow=`0 0 20px ${color}22, inset 0 0 30px rgba(0,0,0,0.5)`;
-                                            const sc=document.getElementById(`spectrum-${i}`); let bars=''; for(let j=0;j<spectrum.length;j++) bars+=`<div class="spectrum-bar" style="height:${Math.max(3,spectrum[j]*100)}%;background:${getSpectrumColor(color,j)};"></spectrum.length>div>`; sc.innerHTML=bars;
-                                            const cap=document.getElementById(`cap-${i}`); cap.style.bottom=`${f.value}%`; cap.style.border=`2px solid ${color}`; cap.style.boxShadow=`0 2px 8px rgba(0,0,0,0.5), 0 0 10px ${color}44`;
-                                            document.getElementById(`value-${i}`).textContent=f.value;
-                                            const mask=document.getElementById(`mask-${i}`); if(isMasking) { mask.style.display='block'; mask.textContent=`⚠ ${mp.join(', ')}`; } else mask.style.display='none';
-                                            const tact=document.getElementById(`tactile-${i}`); tact.style.display=mode==='blind'?'block':'none'; if(mode==='blind') tact.querySelector('.icon').textContent=isMasking?'◉◉◉':'○';
-                                        });
-                                    }
-                                    
-                                    document.addEventListener('mousedown', e => {
-                                        const track=e.target.closest('.fader-track');
-                                        if(track) { const id=+track.id.split('-')[1]; draggingFader={id,rect:track.getBoundingClientRect()}; document.body.style.cursor='grabbing'; const pct=100-((e.clientY-draggingFader.rect.top)/draggingFader.rect.height*100); faders[id].value=Math.max(0,Math.min(100,Math.round(pct))); checkMasking(); updateDisplay(); e.preventDefault(); }
-                                        const knob=e.target.closest('.pan-knob');
-                                        if(knob) { const id=+knob.dataset.id, rect=knob.getBoundingClientRect(), cx=rect.left+rect.width/2, cy=rect.top+rect.height/2; draggingKnob={id,cx,cy,startPan:faders[id].pan,startAngle:Math.atan2(e.clientY-cy,e.clientX-cx)}; document.body.style.cursor='grabbing'; e.preventDefault(); }
-                                    });
-                                    document.addEventListener('mousemove', e => {
-                                        if(draggingFader) { const{id,rect}=draggingFader, pct=100-((e.clientY-rect.top)/rect.height*100), nv=Math.max(0,Math.min(100,Math.round(pct))); if(Math.abs(nv-faders[id].value)>=3) triggerDragFeedback(); faders[id].value=nv; checkMasking(); updateDisplay(); }
-                                        if(draggingKnob) { const{id,cx,cy,startPan,startAngle}=draggingKnob, ca=Math.atan2(e.clientY-cy,e.clientX-cx), ad=(ca-startAngle)*(180/Math.PI); let np=startPan+ad; const op=faders[id].pan; np=Math.max(-100,Math.min(100,np)); if(Math.abs(np)<5&&Math.abs(op)>=5) { np=0; triggerCenterDetent(); } if((np<=-95&&op>-95)||(np>=95&&op<95)) triggerEdgeDetent(); faders[id].pan=np; checkMasking(); updateDisplay(); }
-                                        });
-                                        document.addEventListener('mouseup', () => { draggingFader=null; draggingKnob=null; document.body.style.cursor='default'; });
-                                        
-                                        document.addEventListener('touchstart', e => {
-                                            const track=e.target.closest('.fader-track');
-                                            if(track) { const id=+track.id.split('-')[1]; draggingFader={id,rect:track.getBoundingClientRect()}; const pct=100-((e.touches[0].clientY-draggingFader.rect.top)/draggingFader.rect.height*100); faders[id].value=Math.max(0,Math.min(100,Math.round(pct))); checkMasking(); updateDisplay(); e.preventDefault(); }
-                                            const knob=e.target.closest('.pan-knob');
-                                            if(knob) { const id=+knob.dataset.id, rect=knob.getBoundingClientRect(), cx=rect.left+rect.width/2, cy=rect.top+rect.height/2; draggingKnob={id,cx,cy,startPan:faders[id].pan,startAngle:Math.atan2(e.touches[0].clientY-cy,e.touches[0].clientX-cx)}; e.preventDefault(); }
-                                        }, {passive:false});
-                                        document.addEventListener('touchmove', e => {
-                                            if(draggingFader) { const{id,rect}=draggingFader, pct=100-((e.touches[0].clientY-rect.top)/rect.height*100), nv=Math.max(0,Math.min(100,Math.round(pct))); if(Math.abs(nv-faders[id].value)>=3) triggerDragFeedback(); faders[id].value=nv; checkMasking(); updateDisplay(); e.preventDefault(); }
-                                            if(draggingKnob) { const{id,cx,cy,startPan,startAngle}=draggingKnob, ca=Math.atan2(e.touches[0].clientY-cy,e.touches[0].clientX-cx), ad=(ca-startAngle)*(180/Math.PI); let np=startPan+ad; const op=faders[id].pan; np=Math.max(-100,Math.min(100,np)); if(Math.abs(np)<5&&Math.abs(op)>=5) { np=0; triggerCenterDetent(); } if((np<=-95&&op>-95)||(np>=95&&op<95)) triggerEdgeDetent(); faders[id].pan=np; checkMasking(); updateDisplay(); e.preventDefault(); }
-                                            }, {passive:false});
-                                            document.addEventListener('touchend', () => { draggingFader=null; draggingKnob=null; });
-                                            
-                                            document.querySelectorAll('.mode-btn').forEach(b => b.onclick=() => { document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); mode=b.dataset.mode; });
-                                            document.getElementById('maskingToggle').onchange = e => { showMasking=e.target.checked; checkMasking(); };
-                                            document.getElementById('hapticBtn').onclick = function() {
-                                                hapticsEnabled=true; this.textContent='✓ Sound + Haptics ON'; this.classList.add('enabled');
-                                                initAudio(); if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
-                                                if('vibrate' in navigator) navigator.vibrate([30,30,30]);
-                                                if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=440; g.gain.value=0.1; o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.2); o.stop(audioCtx.currentTime+0.2); }
-                                            };
-                                            
-                                            setInterval(() => { time++; updateDisplay(); }, 50);
-                                            buildFaders(); checkMasking(); updateDisplay();
-                                            </script>
-                                            </body>
-                                            </html></span></span>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OHLA - Opto-Haptic Linear Attenuator</title>
+    <meta property="og:title" content="OHLA - See the Sound. Feel the Mix.">
+    <meta property="og:description" content="Next-generation mixing fader with embedded OLED displays and haptic feedback.">
+    <meta property="og:image" content="https://ohlamix.com/og-image.png">
+    <meta property="og:url" content="https://ohlamix.com">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='12' y='2' width='8' height='28' rx='2' fill='%23333'/><rect x='10' y='8' width='12' height='6' rx='1' fill='url(%23g)'/><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='0'><stop offset='0%' stop-color='%23FF6B35'/><stop offset='100%' stop-color='%234ECDC4'/></linearGradient></defs></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; overflow-x: hidden; }
+        
+        .rainbow-text { background: linear-gradient(90deg, #FF6B35, #F59E0B, #4ECDC4, #A855F7, #FF6B35); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: rainbow 4s linear infinite; }
+        @keyframes rainbow { to { background-position: 200% center; } }
+        
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .glow-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; animation: float 20s ease-in-out infinite; }
+        .orb1 { width: 400px; height: 400px; background: #FF6B35; top: 10%; left: 10%; }
+        .orb2 { width: 350px; height: 350px; background: #4ECDC4; top: 60%; right: 10%; animation-delay: -7s; }
+        .orb3 { width: 300px; height: 300px; background: #A855F7; bottom: 10%; left: 40%; animation-delay: -14s; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -30px) scale(1.05); } 66% { transform: translate(-20px, 20px) scale(0.95); } }
+        
+        .landing { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; }
+        
+        .logo-container { display: flex; align-items: flex-end; justify-content: center; margin-bottom: 0.5rem; animation: logoIn 1.5s ease-out; }
+        @keyframes logoIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .logo-letter { font-size: clamp(4rem, 18vw, 9rem); font-weight: 200; line-height: 1; }
+        .logo-o { color: #FF6B35; }
+        .logo-h { color: #F59E0B; }
+        .logo-a { color: #A855F7; }
+        
+        .fader-l { display: flex; flex-direction: column; align-items: center; position: relative; height: clamp(4rem, 18vw, 9rem); margin: 0 0.08em; }
+        .fader-track-logo { width: clamp(14px, 3.5vw, 22px); height: 75%; background: linear-gradient(180deg, #1a1a24, #0d0d12); border-radius: 4px; position: relative; overflow: hidden; box-shadow: inset 0 2px 6px rgba(0,0,0,0.6); border: 1px solid rgba(78,205,196,0.3); }
+        .fader-spectrum { position: absolute; bottom: 0; left: 0; right: 0; height: 100%; display: flex; align-items: flex-end; justify-content: space-around; padding: 2px; }
+        .fader-spectrum span { width: 2px; background: #4ECDC4; border-radius: 1px; animation: spectrum 0.6s ease-in-out infinite alternate; }
+        .fader-spectrum span:nth-child(1) { height: 35%; animation-delay: 0s; }
+        .fader-spectrum span:nth-child(2) { height: 55%; animation-delay: 0.15s; }
+        .fader-spectrum span:nth-child(3) { height: 40%; animation-delay: 0.3s; }
+        .fader-spectrum span:nth-child(4) { height: 65%; animation-delay: 0.1s; }
+        @keyframes spectrum { 0% { opacity: 0.5; transform: scaleY(0.8); } 100% { opacity: 1; transform: scaleY(1); } }
+        .fader-cap-logo { width: clamp(18px, 4.5vw, 28px); height: clamp(12px, 3vw, 18px); background: linear-gradient(180deg, #5a5a6a 0%, #3a3a44 50%, #4a4a54 100%); border-radius: 3px; position: absolute; top: 18%; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 4px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        .fader-cap-logo::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60%; height: 2px; background: rgba(0,0,0,0.3); border-radius: 1px; }
+        .fader-foot { width: clamp(28px, 7vw, 45px); height: clamp(10px, 2.5vw, 16px); background: linear-gradient(90deg, #4ECDC4, #2dd4bf); border-radius: 2px; margin-top: 2px; box-shadow: 0 0 10px rgba(78,205,196,0.4); }
+        
+        .tagline { font-family: 'Syne', sans-serif; font-size: clamp(0.7rem, 2.5vw, 1rem); font-weight: 400; letter-spacing: 0.35em; color: rgba(255,255,255,0.6); margin-top: 1rem; text-transform: uppercase; animation: tagIn 1.5s ease-out 0.3s both; }
+        @keyframes tagIn { from {
