@@ -1,27 +1,16 @@
-# OHLA: Opto-Haptic Linear Attenuator 🎚️
+OHLA: Opto-Haptic Linear Attenuator
+Deployment URL: ohlamix.com
 
-Welcome to the **OHLA-Prototype** repository. This project features a web-based interactive simulation of an Opto-Haptic Linear Attenuator, designed to explore the synergy between optical feedback and physical haptic control interfaces.
+System Overview
+OHLA is a web-based implementation of a linear attenuation interface. This project explores the functional relationship between optical feedback and haptic control simulation through a high-precision digital slider interface.
 
-## 🚀 Live Demo
-The project is officially live! You can interact with the prototype here:
-**[ohlamix.com](https://ohlamix.com)**
+Technical Specifications
+The system is built using an architecture of static HTML5, CSS3, and JavaScript. It features a linear attenuation slider with synchronized visual feedback and is deployed via GitHub Pages with a custom domain configuration.
 
-## 🛠️ Project Overview
-This prototype demonstrates a linear attenuation system where visual data (Opto) and physical-style control (Haptic) meet. It is built using standard web technologies to ensure accessibility across all modern browsers.
+File Structure
+The repository contains index.html as the site entry point and OHLA-prototype.html as the core interactive module. Visual styling and interface logic are handled by style.css, while the CNAME file manages domain routing.
 
-### Key Features:
-* **Interactive Slider:** A high-precision linear interface for signal attenuation.
-* **Optical Feedback:** Real-time visual response to user input.
-* **Web-Optimized:** Lightweight and responsive design.
+Local Development
+To run this project on a local machine, clone the repository using the command: git clone https://github.com/OHLA-Prototype/OHLA-Prototype.git. Once cloned, open index.html in any modern web browser to initialize the interface.
 
-## 📂 Repository Structure
-* `index.html`: The main landing page for the site.
-* `OHLA-prototype.html`: The core application and interactive logic.
-* `style.css`: Custom styling for the attenuator interface.
-* `CNAME`: Configuration file for the custom domain (ohlamix.com).
-
-## 🔧 How to Run Locally
-If you want to run this project on your own machine:
-1. Clone the repository:
-   ```bash
-   git clone [https://github.com/mixingwithmia/OHLA-Prototype.git](https://github.com/mixingwithmia/OHLA-Prototype.git)
+© 2026 OHLA Project
