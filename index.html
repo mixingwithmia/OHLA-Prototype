@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OHLA - Opto-Haptic Linear Attenuator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; overflow-x: hidden; }
+        
+        .rainbow-text { background: linear-gradient(90deg, #FF6B35, #F59E0B, #4ECDC4, #A855F7, #FF6B35); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: rainbow 6s linear infinite; }
+        @keyframes rainbow { to { background-position: 200% center; } }
+        
+        /* ANIMATED BACKGROUND */
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .glow-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; animation: float 20s ease-in-out infinite; }
+        .orb1 { width: 400px; height: 400px; background: #FF6B35; top: 10%; left: 10%; }
+        .orb2 { width: 350px; height: 350px; background: #4ECDC4; top: 60%; right: 10%; animation-delay: -7s; }
+        .orb3 { width: 300px; height: 300px; background: #A855F7; bottom: 10%; left: 40%; animation-delay: -14s; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -30px) scale(1.05); } 66% { transform: translate(-20px, 20px) scale(0.95); } }
+        
+        /* LANDING */
+        .landing { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; }
+        .logo { font-size: clamp(4rem, 18vw, 9rem); font-weight: 200; letter-spacing: 0.35em; margin-right: -0.35em; animation: logoIn 1.5s ease-out; }
+        @keyframes logoIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .tagline { font-family: 'Syne', sans-serif; font-size: clamp(0.7rem, 2.5vw, 1rem); font-weight: 400; letter-spacing: 0.35em; color: rgba(255,255,255,0.4); margin-top: 0.5rem; text-transform: uppercase; animation: tagIn 1.5s ease-out 0.3s both; }
+        @keyframes tagIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* FLOATING BUTTONS */
+        .floating-btns { position: fixed; bottom: 2rem; right: 2rem; display: flex; gap: 0.75rem; z-index: 100; animation: btnsIn 1s ease-out 0.8s both; }
+        @keyframes btnsIn { from { opacity: 0; transform: translateY(20px); } }
+        .float-btn { padding: 0.9rem 1.6rem; font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s; }
+        .btn-what { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(10px); }
+        .btn-what:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+        .btn-proto { background: linear-gradient(135deg, #FF6B35, #A855F7); color: #fff; box-shadow: 0 4px 20px rgba(168,85,247,0.35); }
+        .btn-proto:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(168,85,247,0.5); }
+        
+        /* CONTACT */
+        .contact { position: absolute; bottom: 2rem; left: 2rem; font-size: 0.75rem; color: rgba(255,255,255,0.3); z-index: 1; }
+        .contact a { color: rgba(255,255,255,0.45); text-decoration: none; transition: color 0.2s; }
+        .contact a:hover { color: #4ECDC4; }
+        
+        /* MODAL */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; overflow-y: auto; backdrop-filter: blur(5px); }
+        .modal.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } }
+        .modal-close { position: fixed; top: 1.25rem; right: 1.25rem; width: 44px; height: 44px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; color: #fff; font-size: 1.5rem; cursor: pointer; z-index: 1001; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .modal-close:hover { background: rgba(255,107,53,0.3); border-color: #FF6B35; }
+        
+        /* WHAT MODAL */
+        .what-content { max-width: 600px; margin: 15vh auto; padding: 3rem 2rem; text-align: center; animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } }
+        .what-content h2 { font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 5vw, 2.5rem); font-weight: 500; margin-bottom: 1.5rem; letter-spacing: 0.05em; }
+        .what-content p { font-size: 1rem; line-height: 1.8; color: rgba(255,255,255,0.7); }
+        
+        /* PROTOTYPE STYLES */
+        .proto-content { padding: 2rem 1rem; padding-top: 4rem; }
+        .proto-header { text-align: center; padding: 1.5rem; }
+        .proto-header h1 { font-size: clamp(2rem, 8vw, 3rem); font-weight: 200; letter-spacing: 0.4em; margin-right: -0.4em; }
+        .proto-header .subtitle { font-size: 0.65rem; letter-spacing: 0.25em; color: #666; text-transform: uppercase; margin-top: 0.25rem; }
+        .proto-header .tagline-sm { font-family: 'Syne', sans-serif; font-size: 0.8rem; color: #555; margin-top: 0.5rem; letter-spacing: 0.15em; }
+        
+        .controls { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; padding: 0 0.5rem; }
+        .mode-btn { padding: 0.5rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; color: #777; font-size: 0.7rem; cursor: pointer; transition: all 0.2s; }
+        .mode-btn:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
+        .mode-btn.active { background: rgba(255,255,255,0.1); border-color: #4ECDC4; color: #4ECDC4; }
+        
+        .masking-toggle { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .toggle-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #777; cursor: pointer; }
+        .toggle-label input { accent-color: #4ECDC4; }
+        .haptic-btn { padding: 0.6rem 1.4rem; background: linear-gradient(135deg, #FF6B35, #F59E0B); border: none; border-radius: 25px; color: #fff; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+        .haptic-btn:hover { transform: scale(1.03); box-shadow: 0 0 25px rgba(255,107,53,0.4); }
+        .haptic-btn.enabled { background: linear-gradient(135deg, #4ECDC4, #2dd4bf); }
+        
+        /* FADER BANK - MOBILE GRID FIX */
+        .fader-bank { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; padding: 1.5rem; background: linear-gradient(180deg, rgba(20,20,30,0.8) 0%, rgba(10,10,15,0.95) 100%); border-radius: 16px; max-width: 580px; margin: 0 auto; }
+        @media (max-width: 500px) { .fader-bank { gap: 0.4rem; padding: 0.8rem; } }
+        
+        .fader-channel { display: flex; flex-direction: column; align-items: center; padding: 0.8rem 0.4rem; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); transition: all 0.3s; }
+        .fader-channel.haptic { animation: haptic 0.5s ease-in-out; box-shadow: 0 0 20px rgba(255,107,53,0.3); }
+        @keyframes haptic { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+        
+        .channel-name { font-weight: 600; font-size: clamp(0.65rem, 3vw, 0.85rem); letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+        
+        .pan-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 0.5rem; }
+        .pan-lr { display: flex; justify-content: space-between; width: 32px; font-size: 0.5rem; color: #555; margin-bottom: 0.2rem; }
+        .pan-knob { width: clamp(30px, 9vw, 38px); height: clamp(30px, 9vw, 38px); border-radius: 50%; background: radial-gradient(circle at 30% 30%, #3a3a4a, #1a1a24); border: 2px solid #FF6B35; position: relative; cursor: grab; box-shadow: 0 2px 8px rgba(0,0,0,0.5); touch-action: none; }
+        .pan-knob.haptic { animation: knobShake 0.3s ease-in-out; }
+        @keyframes knobShake { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+        .pan-indicator { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 3px; height: 10px; background: #FF6B35; border-radius: 2px; transform-origin: center 13px; }
+        .pan-value { font-size: 0.6rem; color: #666; margin-top: 0.25rem; font-family: monospace; }
+        
+        .fader-track { position: relative; width: clamp(38px, 11vw, 52px); height: clamp(160px, 42vw, 230px); background: linear-gradient(180deg, #1a1a24, #0d0d12); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; cursor: pointer; box-shadow: inset 0 2px 10px rgba(0,0,0,0.6); touch-action: none; }
+        .spectrum-container { position: absolute; bottom: 0; left: 0; right: 0; height: 100%; display: flex; align-items: flex-end; justify-content: space-around; padding: 0 3px; pointer-events: none; }
+        .spectrum-bar { width: 2px; min-height: 2px; border-radius: 1px; transition: height 0.05s; }
+        
+        .fader-cap { position: absolute; left: 50%; transform: translateX(-50%); width: clamp(32px, 10vw, 46px); height: clamp(24px, 6vw, 30px); background: linear-gradient(180deg, #4a4a5a 0%, #2a2a34 50%, #3a3a44 100%); border-radius: 5px; cursor: grab; z-index: 10; display: flex; align-items: center; justify-content: center; }
+        .grip-lines { display: flex; flex-direction: column; gap: 3px; }
+        .grip-line { width: 18px; height: 2px; background: rgba(0,0,0,0.4); border-radius: 1px; }
+        
+        .db-scale { position: absolute; right: 3px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 8px 0; font-size: 0.45rem; color: #3a3a3a; pointer-events: none; }
+        
+        .mask-indicator { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); background: rgba(255,70,70,0.9); color: #fff; padding: 2px 5px; border-radius: 4px; font-size: 0.5rem; font-weight: 600; white-space: nowrap; z-index: 20; animation: pulse 1s infinite; }
+        @keyframes pulse { 50% { opacity: 0.7; } }
+        
+        .tactile-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; z-index: 5; pointer-events: none; }
+        .tactile-indicator .icon { font-size: 1.3rem; color: #4ECDC4; }
+        .tactile-indicator .label { font-size: 0.45rem; color: #4ECDC4; letter-spacing: 0.1em; }
+        
+        .fader-value { font-family: monospace; font-size: clamp(1rem, 4.5vw, 1.3rem); font-weight: 600; margin-top: 0.6rem; }
+        
+        .channel-buttons { display: flex; gap: 0.35rem; margin-top: 0.4rem; }
+        .channel-buttons button { width: clamp(24px, 7vw, 30px); height: clamp(24px, 7vw, 30px); border-radius: 5px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: #555; font-size: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-mute.active { background: #ef4444; border-color: #ef4444; color: #fff; }
+        .btn-solo.active { background: #eab308; border-color: #eab308; color: #000; }
+        
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; padding: 1.5rem; max-width: 700px; margin: 1.5rem auto 0; }
+        .feature { background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
+        .feature h3 { font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; color: #4ECDC4; }
+        .feature p { font-size: 0.7rem; color: #666; line-height: 1.5; }
+        
+        .specs { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; padding: 1rem; max-width: 700px; margin: 1rem auto; background: rgba(255,255,255,0.02); border-radius: 10px; }
+        .spec { font-size: 0.65rem; color: #555; }
+        .spec strong { color: #777; }
+        
+        .proto-footer { text-align: center; padding: 1.5rem; font-size: 0.65rem; color: #3a3a3a; }
+        
+        .fader-channel.mode-deaf .fader-track { background: repeating-linear-gradient(45deg, #1a1a24, #1a1a24 5px, #252530 5px, #252530 10px); }
+        
+        @media (max-width: 500px) {
+            .floating-btns { bottom: 1.25rem; right: 1.25rem; gap: 0.5rem; }
+            .float-btn { padding: 0.75rem 1.2rem; font-size: 0.7rem; }
+            .contact { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ANIMATED BG -->
+    <div class="bg-glow">
+        <div class="glow-orb orb1"></div>
+        <div class="glow-orb orb2"></div>
+        <div class="glow-orb orb3"></div>
+    </div>
+    
+    <!-- LANDING -->
+    <div class="landing">
+        <h1 class="logo rainbow-text">OHLA</h1>
+        <p class="tagline">See the Sound. Feel the Mix.</p>
+        <div class="contact">
+            <a href="mailto:contact@ohlamix.com">contact@ohlamix.com</a><br>
+            <span style="font-size:0.65rem;">Patent Pending • © 2025 Mia Fanelli</span>
+        </div>
+    </div>
+    
+    <!-- FLOATING BUTTONS -->
+    <div class="floating-btns">
+        <button class="float-btn btn-what" onclick="openModal('whatModal')">What is OHLA?</button>
+        <button class="float-btn btn-proto" onclick="openModal('protoModal')">Try Prototype</button>
+    </div>
+    
+    <!-- WHAT MODAL -->
+    <div class="modal" id="whatModal">
+        <button class="modal-close" onclick="closeModal('whatModal')">×</button>
+        <div class="what-content">
+            <h2>What is <span class="rainbow-text">OHLA</span>?</h2>
+            <p>OHLA (Opto-Haptic Linear Attenuator) is a next-generation mixing fader that lets you <em>see</em> and <em>feel</em> your audio. Embedded flexible OLED displays show real-time spectral analysis, while precision haptic motors alert you to frequency masking and stereo conflicts—all without looking at a screen.</p>
+        </div>
+    </div>
+    
+    <!-- PROTOTYPE MODAL -->
+    <div class="modal" id="protoModal">
+        <button class="modal-close" onclick="closeModal('protoModal')">×</button>
+        <div class="proto-content">
+            <div class="proto-header">
+                <h1 class="rainbow-text">OHLA</h1>
+                <div class="subtitle">Opto-Haptic Linear Attenuator • Interactive Prototype</div>
+                <div class="tagline-sm">See the Sound. Feel the Mix.</div>
+            </div>
+            
+            <div class="controls">
+                <button class="mode-btn active" data-mode="standard">◉ Standard</button>
+                <button class="mode-btn" data-mode="blind">◐ Tactile (Blind)</button>
+                <button class="mode-btn" data-mode="deaf">◨ High Contrast (Deaf)</button>
+                <button class="mode-btn" data-mode="colorblind">◑ CB Safe</button>
+                <button class="mode-btn" data-mode="synesthesia">◎ Synesthesia</button>
+            </div>
+            
+            <div class="masking-toggle">
+                <label class="toggle-label"><input type="checkbox" id="maskingToggle" checked> Frequency Masking Detection</label>
+                <button class="haptic-btn" id="hapticBtn">🔊 Enable Sound + Haptics</button>
+            </div>
+            
+            <div class="fader-bank" id="faderBank"></div>
+            
+            <div class="features">
+                <div class="feature"><h3>Real-Time FFT Display</h3><p>90mm × 8mm flexible OLED in fader track shows 24-band spectral analysis per channel.</p></div>
+                <div class="feature"><h3>Haptic Masking Alerts</h3><p>Compares ALL channels. Any overlapping frequencies trigger haptic alerts on both faders.</p></div>
+                <div class="feature"><h3>Pan Knobs with Haptic Detents</h3><p>Rotary pan control with center detent feedback. Feel center position without looking.</p></div>
+                <div class="feature"><h3>5 Accessibility Modes</h3><p>Standard, Tactile (Blind), High Contrast (Deaf), Colorblind Safe, and Synesthesia.</p></div>
+            </div>
+            
+            <div class="specs">
+                <span class="spec"><strong>Display:</strong> 90×8mm Flexible AMOLED</span>
+                <span class="spec"><strong>Fader:</strong> 100mm travel, 10kΩ</span>
+                <span class="spec"><strong>Haptics:</strong> 2× LRA motors per fader</span>
+                <span class="spec"><strong>Pan Knob:</strong> Endless encoder w/ haptic detent</span>
+                <span class="spec"><strong>DSP:</strong> ARM Cortex-M7 @ 480MHz</span>
+                <span class="spec"><strong>Latency:</strong> &lt;50ms total</span>
+            </div>
+            
+            <div class="proto-footer">OHLA • Patent Pending • © 2025 Mia Fanelli</div>
+        </div>
+    </div>
+
+<script>
+// Modal
+function openModal(id) { document.getElementById(id).classList.add('active'); document.body.style.overflow='hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); document.body.style.overflow=''; }
+document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active')); document.body.style.overflow=''; });
+
+// Fader data
+const faders = [
+    { id:0, name:'Kick', value:75, pan:0, color:'#FF6B35', muted:false, solo:false, freqRange:[0,6] },
+    { id:1, name:'Bass', value:68, pan:0, color:'#4ECDC4', muted:false, solo:false, freqRange:[2,10] },
+    { id:2, name:'Synth', value:55, pan:-30, color:'#A855F7', muted:false, solo:false, freqRange:[8,18] },
+    { id:3, name:'Vocal', value:82, pan:15, color:'#F59E0B', muted:false, solo:false, freqRange:[10,22] }
+];
+
+let mode='standard', showMasking=true, time=0, maskingPairs={}, panClashPairs={};
+let draggingFader=null, draggingKnob=null, hapticsEnabled=false, audioCtx=null;
+const cbSafe = ['#0077BB','#EE7733','#009988','#CC3311'];
+
+function getColor(c,i) { return mode==='colorblind'?cbSafe[i%4]:mode==='synesthesia'?`hsl(${(i*90+time*2)%360},80%,55%)`:c; }
+function getSpectrumColor(c,b) { return mode==='blind'?'transparent':mode==='synesthesia'?`hsl(${(b*15+time*3)%360},90%,55%)`:c; }
+
+function generateSpectrum(f,idx) {
+    const s=[], [fs,fe]=f.freqRange, ctr=(fs+fe)/2;
+    for(let i=0;i<24;i++) { const d=Math.abs(i-ctr), w=(fe-fs)/2, pk=Math.max(0,1-(d/w)*0.8), n=Math.sin(time*0.3+i*0.5+idx)*0.12; s.push(Math.max(0.02,Math.min(1,(pk+n)*(f.value/100)*(f.muted?0.1:1)))); }
+    return s;
+}
+
+function checkMasking() {
+    const nm={}, np={};
+    if(!showMasking) { maskingPairs={}; panClashPairs={}; return; }
+    for(let i=0;i<faders.length;i++) for(let j=i+1;j<faders.length;j++) {
+        const a=faders[i], b=faders[j];
+        if(a.muted||b.muted) continue;
+        const fo=!(a.freqRange[1]<b.freqRange[0]||b.freqRange[1]<a.freqRange[0]), ls=Math.abs(a.value-b.value)<25, pc=Math.abs(a.pan-b.pan)<30, k=`${i}-${j}`;
+        if(fo&&ls) { nm[k]=true; if(!maskingPairs[k]) triggerMaskingAlert(); }
+        if(fo&&pc&&ls) { np[k]=true; if(!panClashPairs[k]) triggerPanClashAlert(); }
+    }
+    if(!Object.keys(nm).length&&Object.keys(maskingPairs).length) stopMaskingAlert();
+    maskingPairs=nm; panClashPairs=np;
+}
+
+function getMaskingPartners(i) { const p=[]; for(const k in maskingPairs) { const[a,b]=k.split('-').map(Number); if(a===i)p.push(faders[b].name); if(b===i)p.push(faders[a].name); } return p; }
+function getPanClashPartners(i) { const p=[]; for(const k in panClashPairs) { const[a,b]=k.split('-').map(Number); if(a===i)p.push(faders[b].name); if(b===i)p.push(faders[a].name); } return p; }
+
+// iOS-compatible audio
+function initAudio() { if(audioCtx) return; audioCtx=new(window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }
+
+function triggerMaskingAlert() {
+    if(!hapticsEnabled) return;
+    if('vibrate' in navigator) navigator.vibrate([100,50,100]);
+    if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='sawtooth'; o.frequency.value=80; g.gain.setValueAtTime(0,audioCtx.currentTime); g.gain.linearRampToValueAtTime(0.12,audioCtx.currentTime+0.05); g.gain.linearRampToValueAtTime(0.04,audioCtx.currentTime+0.1); g.gain.linearRampToValueAtTime(0.12,audioCtx.currentTime+0.15); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.25); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.25); }
+}
+
+function triggerPanClashAlert() {
+    if(!hapticsEnabled) return;
+    if('vibrate' in navigator) navigator.vibrate([50,30,50,30,50]);
+    if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='square'; o.frequency.value=200; g.gain.value=0.08; o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.15); o.stop(audioCtx.currentTime+0.15); }
+}
+
+function stopMaskingAlert() {}
+
+function triggerCenterDetent() {
+    if(!hapticsEnabled) return;
+    if('vibrate' in navigator) navigator.vibrate(40);
+    if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=1200; g.gain.setValueAtTime(0.08,audioCtx.currentTime); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.02); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.02); }
+}
+
+function triggerEdgeDetent() {
+    if(!hapticsEnabled) return;
+    if('vibrate' in navigator) navigator.vibrate(25);
+    if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=600; g.gain.setValueAtTime(0.04,audioCtx.currentTime); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.015); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.015); }
+}
+
+function triggerDragFeedback() { if(!hapticsEnabled) return; if('vibrate' in navigator) navigator.vibrate(10); }
+
+function formatPan(p) { return Math.abs(p)<3?'C':p<0?`L${Math.abs(Math.round(p))}`:`R${Math.round(p)}`; }
+
+function buildFaders() {
+    const bank=document.getElementById('faderBank'); if(!bank) return; bank.innerHTML='';
+    faders.forEach((f,i) => {
+        const ch=document.createElement('div'); ch.className='fader-channel'; ch.id=`channel-${i}`;
+        ch.innerHTML=`<div class="channel-name">${f.name}</div><div class="pan-container"><div class="pan-lr"><span>L</span><span>R</span></div><div class="pan-knob" id="knob-${i}" data-id="${i}"><div class="pan-indicator" id="indicator-${i}"></div></div><div class="pan-value" id="pan-value-${i}">${formatPan(f.pan)}</div></div><div class="fader-track" id="track-${i}"><div class="spectrum-container" id="spectrum-${i}"></div><div class="fader-cap" id="cap-${i}"><div class="grip-lines"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div></div><div class="db-scale"><span>+10</span><span>0</span><span>-∞</span></div><div class="mask-indicator" id="mask-${i}" style="display:none;"></div><div class="tactile-indicator" id="tactile-${i}" style="display:none;"><div class="icon">○</div><div class="label">TACTILE</div></div></div><div class="fader-value" id="value-${i}">${f.value}</div><div class="channel-buttons"><button class="btn-mute" data-id="${i}">M</button><button class="btn-solo" data-id="${i}">S</button></div>`;
+        bank.appendChild(ch);
+    });
+    document.querySelectorAll('.btn-mute').forEach(b => b.onclick=e => { const id=+e.target.dataset.id; faders[id].muted=!faders[id].muted; e.target.classList.toggle('active',faders[id].muted); checkMasking(); });
+    document.querySelectorAll('.btn-solo').forEach(b => b.onclick=e => { const id=+e.target.dataset.id; faders[id].solo=!faders[id].solo; e.target.classList.toggle('active',faders[id].solo); });
+}
+
+function updateDisplay() {
+    faders.forEach((f,i) => {
+        const color=getColor(f.color,i), spectrum=generateSpectrum(f,i), mp=getMaskingPartners(i), isMasking=mp.length>0, pcp=getPanClashPartners(i), hasPanClash=pcp.length>0;
+        const ch=document.getElementById(`channel-${i}`); if(!ch) return;
+        ch.className=`fader-channel ${isMasking?'haptic':''} ${mode==='deaf'?'mode-deaf':''}`;
+        ch.style.borderColor=mode==='deaf'?'#fff':'rgba(255,255,255,0.08)';
+        ch.querySelector('.channel-name').style.color=color;
+        const knob=document.getElementById(`knob-${i}`); knob.className=`pan-knob ${hasPanClash?'haptic':''}`;
+        const ind=document.getElementById(`indicator-${i}`); knob.style.borderColor=color; ind.style.background=color; ind.style.transform=`translateX(-50%) rotate(${f.pan*1.35}deg)`;
+        document.getElementById(`pan-value-${i}`).textContent=formatPan(f.pan);
+        const track=document.getElementById(`track-${i}`); track.style.borderColor=`${color}33`; track.style.boxShadow=`0 0 20px ${color}22, inset 0 0 30px rgba(0,0,0,0.5)`;
+        const sc=document.getElementById(`spectrum-${i}`); let bars=''; for(let j=0;j<spectrum.length;j++) bars+=`<div class="spectrum-bar" style="height:${Math.max(3,spectrum[j]*100)}%;background:${getSpectrumColor(color,j)};"></div>`; sc.innerHTML=bars;
+        const cap=document.getElementById(`cap-${i}`); cap.style.bottom=`${f.value}%`; cap.style.border=`2px solid ${color}`; cap.style.boxShadow=`0 2px 8px rgba(0,0,0,0.5), 0 0 10px ${color}44`;
+        document.getElementById(`value-${i}`).textContent=f.value;
+        const mask=document.getElementById(`mask-${i}`); if(isMasking) { mask.style.display='block'; mask.textContent=`⚠ ${mp.join(', ')}`; } else mask.style.display='none';
+        const tact=document.getElementById(`tactile-${i}`); tact.style.display=mode==='blind'?'block':'none'; if(mode==='blind') tact.querySelector('.icon').textContent=isMasking?'◉◉◉':'○';
+    });
+}
+
+// Mouse events
+document.addEventListener('mousedown', e => {
+    const track=e.target.closest('.fader-track');
+    if(track) { const id=+track.id.split('-')[1]; draggingFader={id,rect:track.getBoundingClientRect()}; document.body.style.cursor='grabbing'; const pct=100-((e.clientY-draggingFader.rect.top)/draggingFader.rect.height*100); faders[id].value=Math.max(0,Math.min(100,Math.round(pct))); checkMasking(); updateDisplay(); e.preventDefault(); }
+    const knob=e.target.closest('.pan-knob');
+    if(knob) { const id=+knob.dataset.id, rect=knob.getBoundingClientRect(), cx=rect.left+rect.width/2, cy=rect.top+rect.height/2; draggingKnob={id,cx,cy,startPan:faders[id].pan,startAngle:Math.atan2(e.clientY-cy,e.clientX-cx)}; document.body.style.cursor='grabbing'; e.preventDefault(); }
+});
+
+document.addEventListener('mousemove', e => {
+    if(draggingFader) { const{id,rect}=draggingFader, pct=100-((e.clientY-rect.top)/rect.height*100), nv=Math.max(0,Math.min(100,Math.round(pct))); if(Math.abs(nv-faders[id].value)>=3) triggerDragFeedback(); faders[id].value=nv; checkMasking(); updateDisplay(); }
+    if(draggingKnob) { const{id,cx,cy,startPan,startAngle}=draggingKnob, ca=Math.atan2(e.clientY-cy,e.clientX-cx), ad=(ca-startAngle)*(180/Math.PI); let np=startPan+ad; const op=faders[id].pan; np=Math.max(-100,Math.min(100,np)); if(Math.abs(np)<5&&Math.abs(op)>=5) { np=0; triggerCenterDetent(); } if((np<=-95&&op>-95)||(np>=95&&op<95)) triggerEdgeDetent(); faders[id].pan=np; checkMasking(); updateDisplay(); }
+});
+
+document.addEventListener('mouseup', () => { draggingFader=null; draggingKnob=null; document.body.style.cursor='default'; });
+
+// Touch events
+document.addEventListener('touchstart', e => {
+    const track=e.target.closest('.fader-track');
+    if(track) { const id=+track.id.split('-')[1]; draggingFader={id,rect:track.getBoundingClientRect()}; const pct=100-((e.touches[0].clientY-draggingFader.rect.top)/draggingFader.rect.height*100); faders[id].value=Math.max(0,Math.min(100,Math.round(pct))); checkMasking(); updateDisplay(); e.preventDefault(); }
+    const knob=e.target.closest('.pan-knob');
+    if(knob) { const id=+knob.dataset.id, rect=knob.getBoundingClientRect(), cx=rect.left+rect.width/2, cy=rect.top+rect.height/2; draggingKnob={id,cx,cy,startPan:faders[id].pan,startAngle:Math.atan2(e.touches[0].clientY-cy,e.touches[0].clientX-cx)}; e.preventDefault(); }
+}, {passive:false});
+
+document.addEventListener('touchmove', e => {
+    if(draggingFader) { const{id,rect}=draggingFader, pct=100-((e.touches[0].clientY-rect.top)/rect.height*100), nv=Math.max(0,Math.min(100,Math.round(pct))); if(Math.abs(nv-faders[id].value)>=3) triggerDragFeedback(); faders[id].value=nv; checkMasking(); updateDisplay(); e.preventDefault(); }
+    if(draggingKnob) { const{id,cx,cy,startPan,startAngle}=draggingKnob, ca=Math.atan2(e.touches[0].clientY-cy,e.touches[0].clientX-cx), ad=(ca-startAngle)*(180/Math.PI); let np=startPan+ad; const op=faders[id].pan; np=Math.max(-100,Math.min(100,np)); if(Math.abs(np)<5&&Math.abs(op)>=5) { np=0; triggerCenterDetent(); } if((np<=-95&&op>-95)||(np>=95&&op<95)) triggerEdgeDetent(); faders[id].pan=np; checkMasking(); updateDisplay(); e.preventDefault(); }
+}, {passive:false});
+
+document.addEventListener('touchend', () => { draggingFader=null; draggingKnob=null; });
+
+// Mode buttons
+document.querySelectorAll('.mode-btn').forEach(b => b.onclick=() => { document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); mode=b.dataset.mode; });
+
+document.getElementById('maskingToggle').onchange = e => { showMasking=e.target.checked; checkMasking(); };
+
+document.getElementById('hapticBtn').onclick = function() {
+    hapticsEnabled=true; this.textContent='✓ Sound + Haptics ON'; this.classList.add('enabled');
+    initAudio(); if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
+    if('vibrate' in navigator) navigator.vibrate([30,30,30]);
+    if(audioCtx) { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=440; g.gain.value=0.1; o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.2); o.stop(audioCtx.currentTime+0.2); }
+};
+
+setInterval(() => { time++; updateDisplay(); }, 50);
+buildFaders(); checkMasking(); updateDisplay();
+</script>
+</body>
+</html>
