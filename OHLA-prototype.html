@@ -1,442 +1,330 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>OHLA - Opto-Haptic Linear Attenuator | Interactive Prototype</title>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>OHLA Prototype</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
-      color: #fff;
-      padding: 24px;
-      overflow-x: hidden;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    
-    .ambient {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: radial-gradient(circle at 30% 20%, rgba(142, 69, 133, 0.15) 0%, transparent 50%),
-                  radial-gradient(circle at 70% 80%, rgba(78, 205, 196, 0.1) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-    
-    .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; }
-    header { margin-bottom: 32px; text-align: center; }
-    
-    h1 {
-      font-size: 48px; font-weight: 200; letter-spacing: 16px;
-      background: linear-gradient(90deg, #8E4585 0%, #C9A227 50%, #4ECDC4 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; text-transform: uppercase;
-    }
-    
-    .subtitle { font-size: 12px; letter-spacing: 4px; color: rgba(255,255,255,0.5); margin-top: 8px; text-transform: uppercase; }
-    .tagline { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; }
-    
-    .mode-selector { display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
-    
-    .mode-btn {
-      padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 6px; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 11px;
-      letter-spacing: 1px; text-transform: uppercase; font-family: inherit;
-      transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;
-    }
-    
-    .mode-btn.active { background: rgba(142, 69, 133, 0.4); border-color: #8E4585; color: #fff; }
-    .mode-btn:hover { border-color: rgba(255,255,255,0.3); }
-    
-    .toggle-row { text-align: center; margin-bottom: 24px; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
-    .toggle-label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; }
-    .toggle-label input { accent-color: #8E4585; }
-    
-    .haptic-btn {
-      padding: 10px 20px; background: linear-gradient(135deg, #8E4585, #6B3FA0); border: none;
-      border-radius: 6px; color: #fff; font-size: 12px; font-weight: 600; letter-spacing: 1px;
-      text-transform: uppercase; cursor: pointer; font-family: inherit; transition: all 0.2s ease;
-    }
-    .haptic-btn:hover { transform: scale(1.05); }
-    .haptic-btn.enabled { background: linear-gradient(135deg, #22C55E, #16A34A); }
-    
-    .fader-bank { display: flex; justify-content: center; gap: 24px; padding: 32px; background: rgba(0,0,0,0.3); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
-    .fader-channel { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; border-radius: 12px; transition: all 0.3s ease; }
-    .fader-channel.haptic { animation: hapticShake 0.1s ease-in-out infinite; }
-    .channel-name { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
-    
-    .fader-track { position: relative; width: 60px; height: 320px; background: rgba(0,0,0,0.6); border-radius: 8px; overflow: hidden; cursor: pointer; }
-    .spectrum-container { position: absolute; bottom: 0; left: 0; right: 0; height: 100%; display: flex; align-items: flex-end; padding: 0 4px; gap: 1px; pointer-events: none; z-index: 1; }
-    .spectrum-bar { flex: 1; border-radius: 2px 2px 0 0; transition: height 0.05s ease; min-height: 2px; }
-    
-    .fader-cap {
-      position: absolute; left: 50%; transform: translate(-50%, 50%); width: 52px; height: 28px;
-      background: linear-gradient(180deg, #555 0%, #333 50%, #444 100%); border-radius: 4px;
-      cursor: grab; display: flex; align-items: center; justify-content: center;
-      user-select: none; touch-action: none; z-index: 5;
-    }
-    .fader-cap:hover { background: linear-gradient(180deg, #666 0%, #444 50%, #555 100%); }
-    .fader-cap:active { cursor: grabbing; }
-    
-    .grip-lines { display: flex; gap: 3px; }
-    .grip-line { width: 2px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 1px; }
-    .db-scale { position: absolute; right: 2px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; font-size: 7px; color: rgba(255,255,255,0.3); padding: 4px 0; pointer-events: none; }
-    
-    .mask-indicator { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); padding: 4px 8px; background: #FF4444; border-radius: 4px; font-size: 9px; font-weight: bold; animation: pulse 0.3s ease-in-out infinite; z-index: 20; }
-    .tactile-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
-    .tactile-indicator .icon { font-size: 24px; margin-bottom: 4px; }
-    .tactile-indicator .label { font-size: 9px; color: rgba(255,255,255,0.5); }
-    
-    .fader-value { font-size: 18px; font-weight: 300; color: rgba(255,255,255,0.8); }
-    .channel-buttons { display: flex; gap: 4px; }
-    .btn-mute, .btn-solo { width: 28px; height: 24px; border: none; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; font-family: inherit; transition: all 0.2s ease; }
-    .btn-mute { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
-    .btn-mute.active { background: #FF4444; color: #fff; }
-    .btn-solo { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
-    .btn-solo.active { background: #FFCC00; color: #000; }
-    
-    .info-panel { margin-top: 32px; padding: 24px; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
-    .panel-title { font-size: 14px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #8E4585; margin-bottom: 16px; }
-    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.6; }
-    .feature strong { display: block; margin-bottom: 4px; }
-    
-    .specs-panel { margin-top: 24px; padding: 24px; background: rgba(142, 69, 133, 0.1); border-radius: 12px; border: 1px solid rgba(142, 69, 133, 0.2); }
-    .specs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 11px; color: rgba(255,255,255,0.6); }
-    footer { margin-top: 32px; text-align: center; font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 1px; }
-    
-    @keyframes hapticShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    
-    .mode-deaf .fader-track { background: #000; border: 3px solid #fff; }
-    .mode-deaf .fader-channel { border: 1px solid #fff; }
-    
-    @media (max-width: 600px) {
-      h1 { font-size: 32px; letter-spacing: 8px; }
-      .fader-track { height: 280px; width: 50px; }
-      .fader-cap { width: 44px; height: 24px; }
-      .fader-bank { gap: 12px; padding: 16px; }
-      .mode-btn { padding: 8px 12px; font-size: 10px; }
-    }
-  </style>
-</head>
-<body>
-  <div class="ambient"></div>
-  <div class="container">
-    <header>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,system-ui,sans-serif;background:linear-gradient(135deg,#0a0a12,#1a1025,#0a0a12);min-height:100vh;color:#fff;user-select:none;-webkit-user-select:none;overflow-x:hidden}
+    .container{padding:16px;max-width:600px;margin:0 auto}
+    h1{text-align:center;font-size:28px;font-weight:300;letter-spacing:0.3em;background:linear-gradient(90deg,#FF6B35,#4ECDC4,#A855F7,#F59E0B);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+    .subtitle{text-align:center;font-size:10px;color:#666;letter-spacing:0.2em;margin-bottom:16px}
+    .controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:12px}
+    .mode-btn{padding:8px 14px;font-size:11px;border-radius:20px;border:2px solid #444;background:#1a1a2e;color:#999;cursor:pointer;transition:all 0.2s}
+    .mode-btn.active{border-color:#a855f7;background:rgba(168,85,247,0.2);color:#fff}
+    .play-btn{padding:10px 24px;font-size:13px;border-radius:20px;border:2px solid #22c55e;background:rgba(34,197,94,0.2);color:#86efac;cursor:pointer;font-weight:500}
+    .play-btn.playing{border-color:#ef4444;background:rgba(239,68,68,0.2);color:#fca5a5}
+    .options{display:flex;justify-content:center;gap:16px;margin-bottom:16px;font-size:11px;color:#888}
+    .options label{display:flex;align-items:center;gap:6px;cursor:pointer}
+    .haptic-btn{padding:6px 14px;border-radius:16px;border:1px solid #f97316;background:rgba(249,115,22,0.15);color:#fdba74;cursor:pointer;font-size:11px}
+    .haptic-btn.on{border-color:#10b981;background:rgba(16,185,129,0.15);color:#6ee7b7}
+    .mixer{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+    .channel{background:linear-gradient(145deg,rgba(30,30,45,0.95),rgba(15,15,25,0.98));border-radius:16px;padding:12px;border:1px solid rgba(255,255,255,0.08);transition:border-color 0.3s,box-shadow 0.3s}
+    .channel.masking{border-color:rgba(239,68,68,0.4);box-shadow:0 0 20px rgba(239,68,68,0.15)}
+    .ch-name{text-align:center;font-size:13px;font-weight:500;margin-bottom:8px}
+    .pan-row{display:flex;flex-direction:column;align-items:center;margin-bottom:8px}
+    .pan-labels{display:flex;justify-content:space-between;width:40px;font-size:9px;color:#666;margin-bottom:4px}
+    .pan-knob{width:36px;height:36px;border-radius:50%;background:linear-gradient(145deg,#1a1a2e,#0f0f1a);position:relative;cursor:pointer}
+    .pan-indicator{position:absolute;width:4px;height:10px;background:#fff;border-radius:2px;top:4px;left:50%;transform:translateX(-50%);transform-origin:center 14px}
+    .pan-value{font-size:9px;color:#888;margin-top:4px}
+    .track{width:56px;height:220px;background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.7));border-radius:10px;position:relative;overflow:hidden;cursor:ns-resize}
+    .spectrum{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:flex-end;justify-content:space-around;padding:0 2px 4px}
+    .bar{width:3px;background:#fff;border-radius:1px 1px 0 0;transition:height 0.05s}
+    .cap{position:absolute;left:4px;right:4px;height:28px;background:linear-gradient(180deg,#2a2a3e,#1a1a2e);border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;transition:bottom 0.05s}
+    .grip{display:flex;flex-direction:column;gap:2px}
+    .grip-line{width:20px;height:2px;background:rgba(255,255,255,0.4);border-radius:1px}
+    .db-scale{position:absolute;right:2px;top:8px;bottom:8px;display:flex;flex-direction:column;justify-content:space-between;font-size:7px;color:#555}
+    .mask-badge{position:absolute;top:4px;left:4px;right:4px;background:rgba(239,68,68,0.9);color:#fff;font-size:7px;padding:2px 4px;border-radius:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .value{text-align:center;font-size:16px;font-family:monospace;margin-top:8px}
+    .buttons{display:flex;justify-content:center;gap:4px;margin-top:8px}
+    .btn{width:26px;height:26px;border-radius:4px;border:1px solid #444;background:transparent;color:#666;font-size:10px;cursor:pointer}
+    .btn.active-m{border-color:#ef4444;background:rgba(239,68,68,0.2);color:#fca5a5}
+    .btn.active-s{border-color:#eab308;background:rgba(234,179,8,0.2);color:#fde047}
+    .master{background:linear-gradient(145deg,rgba(40,30,55,0.95),rgba(20,15,35,0.98))}
+    .master .ch-name{color:rgba(255,255,255,0.6)}
+    .master .track{width:36px}
+    .master .cap{border-color:rgba(255,255,255,0.3)}
+    .meter{position:absolute;bottom:0;left:6px;right:6px;background:linear-gradient(to top,#22c55e,#eab308,#ef4444);border-radius:4px;opacity:0.5}
+    footer{text-align:center;margin-top:20px;font-size:9px;color:#444}
+    </style>
+  </head>
+  <body>
+    <div class="container">
       <h1>OHLA</h1>
-      <p class="subtitle">Opto-Haptic Linear Attenuator • Interactive Prototype</p>
-      <p class="tagline">See the Sound. Feel the Mix.</p>
-    </header>
+    <p class="subtitle">OPTO-HAPTIC LINEAR ATTENUATOR</p>p>
     
-    <div class="mode-selector">
-      <button class="mode-btn active" data-mode="standard"><span>◉</span> Standard</button>
-      <button class="mode-btn" data-mode="blind"><span>◐</span> Tactile (Blind)</button>
-      <button class="mode-btn" data-mode="deaf"><span>◨</span> High Contrast (Deaf)</button>
-      <button class="mode-btn" data-mode="colorblind"><span>◑</span> CB Safe</button>
-      <button class="mode-btn" data-mode="synesthesia"><span>◎</span> Synesthesia</button>
-    </div>
+    <div class="controls" id="modes"></div>div>
     
-    <div class="toggle-row">
-      <label class="toggle-label">
-        <input type="checkbox" id="maskingToggle" checked>
-        Frequency Masking Detection
-      </label>
-      <button id="hapticBtn" class="haptic-btn">🔊 Enable Sound + Haptics</button>
-    </div>
+    <div class="controls">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">▶ Play Demo</button>button>
+    </div>div>
     
-    <div class="fader-bank" id="faderBank"></div>
+    <div class="options">
+    <label><input type="checkbox" id="maskChk" checked onchange="showMasking=this.checked;checkMasking()"> Masking</label>
+    <button class="haptic-btn" id="hapticBtn" onclick="enableHaptics()">🔊 Haptics</button>button>
+    </div>div>
     
-    <div class="info-panel">
-      <h3 class="panel-title">Prototype Features</h3>
-      <div class="features-grid">
-        <div class="feature"><strong style="color: #4ECDC4">Real-Time FFT Display</strong><p>90mm × 8mm flexible OLED embedded in fader track shows 24-band spectral analysis.</p></div>
-        <div class="feature"><strong style="color: #FF6B35">Haptic Masking Alerts</strong><p>Dual LRA motors vibrate when frequency overlap detected. Try setting Kick and Bass to similar levels!</p></div>
-        <div class="feature"><strong style="color: #A855F7">Accessibility Modes</strong><p>5 display modes: Standard, Tactile-only, High-contrast, Colorblind-safe, and Synesthesia.</p></div>
-        <div class="feature"><strong style="color: #C9A227">Sub-50ms Latency</strong><p>ARM Cortex-M7 DSP with CMSIS-DSP library. TDM bus for inter-unit communication.</p></div>
-      </div>
-    </div>
-    
-    <div class="specs-panel">
-      <h3 class="panel-title">Key Specifications</h3>
-      <div class="specs-grid">
-        <div><strong>Display:</strong> 90×8mm Flexible AMOLED</div>
-        <div><strong>Fader:</strong> 100mm travel, 10kΩ</div>
-        <div><strong>Haptics:</strong> 2× LRA motors, 175Hz</div>
-        <div><strong>DSP:</strong> ARM Cortex-M7 @ 480MHz</div>
-        <div><strong>FFT:</strong> 1024-point, 24 Bark bands</div>
-        <div><strong>Latency:</strong> &lt;50ms total</div>
-      </div>
-    </div>
+    <div class="mixer" id="mixer"></div>div>
     
     <footer>OHLA • Patent Pending • © 2025 Mia Fanelli</footer>
-  </div>
-
+    </div>div>
+  
   <script>
-    const faders = [
-      { id: 0, name: 'Kick', value: 75, color: '#FF6B35', muted: false, solo: false },
-      { id: 1, name: 'Bass', value: 68, color: '#4ECDC4', muted: false, solo: false },
-      { id: 2, name: 'Synth', value: 55, color: '#A855F7', muted: false, solo: false },
-      { id: 3, name: 'Vocal', value: 82, color: '#F59E0B', muted: false, solo: false },
-    ];
-    
-    let mode = 'standard', showMasking = true, time = 0, hapticPulse = {}, dragging = null;
-    let hapticsEnabled = false, audioCtx = null, buzzOscillator = null, buzzGain = null, lastMaskingState = false;
-    const cbSafe = ['#0077BB', '#EE7733', '#009988', '#CC3311'];
-    
-    function getColor(baseColor, index) {
-      if (mode === 'colorblind') return cbSafe[index % 4];
-      if (mode === 'synesthesia') return `hsl(${(index * 90 + time * 2) % 360}, 80%, 55%)`;
-      return baseColor;
-    }
-    
-    function getSpectrumColor(baseColor, bandIndex) {
-      if (mode === 'blind') return 'transparent';
-      if (mode === 'synesthesia') return `hsl(${(bandIndex * 15 + time * 3) % 360}, 90%, 55%)`;
-      if (mode === 'colorblind') return baseColor;
-      return baseColor;
-    }
-    
-    function generateSpectrum(fader, index) {
-      const spectrum = [], baseFreq = index === 0 ? 0 : index === 1 ? 2 : index === 2 ? 8 : 12;
-      for (let i = 0; i < 24; i++) {
-        const distance = Math.abs(i - baseFreq - 4);
-        const peak = Math.max(0, 1 - distance * 0.15);
-        const noise = Math.sin(time * 0.3 + i * 0.5 + index) * 0.15;
-        const value = (peak + noise) * (fader.value / 100) * (fader.muted ? 0.1 : 1);
-        spectrum.push(Math.max(0.05, Math.min(1, value)));
+    const CH=[
+      {id:0,name:'Kick',color:'#FF6B35',freq:[0,6],val:75,pan:0,muted:false,solo:false},
+      {id:1,name:'Bass',color:'#4ECDC4',freq:[2,10],val:68,pan:0,muted:false,solo:false},
+      {id:2,name:'Synth',color:'#A855F7',freq:[8,18],val:55,pan:-30,muted:false,solo:false},
+      {id:3,name:'Vocal',color:'#F59E0B',freq:[10,22],val:82,pan:15,muted:false,solo:false}
+      ];
+    let master=85,mode='standard',showMasking=true,hapticsOn=false,playing=false,t=0,ctx=null,gains=[],pans=[],masterGain=null,loopId=null,drag=null;
+    const MODES=[{k:'standard',l:'◉ Standard'},{k:'blind',l:'◐ Tactile'},{k:'deaf',l:'◨ High Contrast'},{k:'colorblind',l:'◑ CB Safe'},{k:'synesthesia',l:'◎ Synesthesia'}];
+    const CB=['#0077BB','#EE7733','#009988','#CC3311'];
+
+    function initAudio(){if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume()}
+
+    function haptic(pattern,freq,dur,type){
+      if(!hapticsOn)return;
+      // Android/Chrome vibration - use array pattern
+      if(navigator.vibrate){
+        try{
+          const vp=Array.isArray(pattern)?pattern:[pattern];
+          navigator.vibrate(vp);
+        }catch(e){}
       }
-      return spectrum;
-    }
-    
-    function checkMasking() {
-      const overlap = Math.abs(faders[0].value - faders[1].value) < 20 && !faders[0].muted && !faders[1].muted && showMasking;
-      if (overlap && !lastMaskingState) {
-        hapticPulse = { 0: true, 1: true };
-        triggerMaskingAlert();
-        lastMaskingState = true;
-      } else if (!overlap) {
-        hapticPulse = {};
-        stopMaskingAlert();
-        lastMaskingState = false;
+      // Audio-based haptic fallback for iOS and all platforms
+      if(ctx){
+        try{
+          const o=ctx.createOscillator(),g=ctx.createGain();
+          o.type=type||'sine';
+          o.frequency.value=freq||200;
+          g.gain.setValueAtTime(0.15,ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+(dur||0.1));
+          o.connect(g);g.connect(ctx.destination);
+          o.start();o.stop(ctx.currentTime+(dur||0.1));
+        }catch(e){}
       }
     }
-    
-    function initAudio() {
-      if (audioCtx) return;
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      buzzOscillator = audioCtx.createOscillator();
-      buzzGain = audioCtx.createGain();
-      buzzOscillator.type = 'sawtooth';
-      buzzOscillator.frequency.value = 80;
-      buzzGain.gain.value = 0;
-      buzzOscillator.connect(buzzGain);
-      buzzGain.connect(audioCtx.destination);
-      buzzOscillator.start();
-    }
-    
-    function triggerMaskingAlert() {
-      if (!hapticsEnabled) return;
-      if (audioCtx && buzzGain) {
-        const now = audioCtx.currentTime;
-        buzzGain.gain.cancelScheduledValues(now);
-        buzzGain.gain.setValueAtTime(0, now);
-        buzzGain.gain.linearRampToValueAtTime(0.12, now + 0.05);
-        buzzGain.gain.linearRampToValueAtTime(0.04, now + 0.1);
-        buzzGain.gain.linearRampToValueAtTime(0.12, now + 0.15);
-        buzzGain.gain.linearRampToValueAtTime(0.04, now + 0.2);
-        buzzGain.gain.linearRampToValueAtTime(0.12, now + 0.25);
-        buzzGain.gain.linearRampToValueAtTime(0, now + 0.35);
-      }
-      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100]);
-    }
-    
-    function stopMaskingAlert() {
-      if (audioCtx && buzzGain) {
-        buzzGain.gain.cancelScheduledValues(audioCtx.currentTime);
-        buzzGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-      }
-    }
-    
-    function triggerDragFeedback() {
-      if (!hapticsEnabled) return;
-      if ('vibrate' in navigator) navigator.vibrate(15);
-      if (audioCtx) {
-        const click = audioCtx.createOscillator(), clickGain = audioCtx.createGain();
-        click.frequency.value = 800; clickGain.gain.value = 0.02;
-        click.connect(clickGain); clickGain.connect(audioCtx.destination);
-        click.start(); click.stop(audioCtx.currentTime + 0.015);
-      }
-    }
-    
-    function buildFaders() {
-      const bank = document.getElementById('faderBank');
-      bank.innerHTML = '';
-      faders.forEach((fader, index) => {
-        const channel = document.createElement('div');
-        channel.className = 'fader-channel';
-        channel.id = `channel-${index}`;
-        channel.innerHTML = `
-          <div class="channel-name">${fader.name}</div>
-          <div class="fader-track" id="track-${index}">
-            <div class="spectrum-container" id="spectrum-${index}"></div>
-            <div class="fader-cap" id="cap-${index}">
-              <div class="grip-lines"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div>
-            </div>
-            <div class="db-scale"><span>+10</span><span>0</span><span>-∞</span></div>
-            <div class="mask-indicator" id="mask-${index}" style="display:none;">⚠ MASK</div>
-            <div class="tactile-indicator" id="tactile-${index}" style="display:none;"><div class="icon">○</div><div class="label">TACTILE</div></div>
-          </div>
-          <div class="fader-value" id="value-${index}">${fader.value}</div>
-          <div class="channel-buttons">
-            <button class="btn-mute" data-id="${index}">M</button>
-            <button class="btn-solo" data-id="${index}">S</button>
-          </div>
-        `;
-        bank.appendChild(channel);
-      });
-      
-      document.querySelectorAll('.btn-mute').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = parseInt(e.target.dataset.id);
-          faders[id].muted = !faders[id].muted;
-          e.target.classList.toggle('active', faders[id].muted);
-          checkMasking();
-        });
-      });
-      
-      document.querySelectorAll('.btn-solo').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = parseInt(e.target.dataset.id);
-          faders[id].solo = !faders[id].solo;
-          e.target.classList.toggle('active', faders[id].solo);
-        });
-      });
-    }
-    
-    function updateDisplay() {
-      faders.forEach((fader, index) => {
-        const color = getColor(fader.color, index);
-        const spectrum = generateSpectrum(fader, index);
-        const isHaptic = hapticPulse[index];
-        
-        const channel = document.getElementById(`channel-${index}`);
-        channel.className = `fader-channel ${isHaptic ? 'haptic' : ''} ${mode === 'deaf' ? 'mode-deaf' : ''}`;
-        channel.style.border = `1px solid ${mode === 'deaf' ? '#fff' : 'rgba(255,255,255,0.1)'}`;
-        channel.querySelector('.channel-name').style.color = color;
-        
-        const track = document.getElementById(`track-${index}`);
-        track.style.borderColor = `${color}33`;
-        track.style.boxShadow = `0 0 20px ${color}22, inset 0 0 30px rgba(0,0,0,0.5)`;
-        
-        const spectrumContainer = document.getElementById(`spectrum-${index}`);
-        let barsHTML = '';
-        for (let i = 0; i < spectrum.length; i++) {
-          const barColor = getSpectrumColor(color, i);
-          const heightPct = Math.max(5, spectrum[i] * 100);
-          barsHTML += `<div class="spectrum-bar" style="height: ${heightPct}%; background: ${barColor};"></div>`;
-        }
-        spectrumContainer.innerHTML = barsHTML;
-        
-        const cap = document.getElementById(`cap-${index}`);
-        cap.style.bottom = `${fader.value}%`;
-        cap.style.border = `2px solid ${color}`;
-        cap.style.boxShadow = `0 2px 8px rgba(0,0,0,0.5), 0 0 10px ${color}44`;
-        
-        document.getElementById(`value-${index}`).textContent = fader.value;
-        document.getElementById(`mask-${index}`).style.display = isHaptic ? 'block' : 'none';
-        
-        const tactileEl = document.getElementById(`tactile-${index}`);
-        tactileEl.style.display = mode === 'blind' ? 'block' : 'none';
-        if (mode === 'blind') tactileEl.querySelector('.icon').textContent = isHaptic ? '◉◉◉' : '○';
-      });
-    }
-    
-    // Mouse drag
-    document.addEventListener('mousedown', (e) => {
-      const track = e.target.closest('.fader-track');
-      if (track) {
-        const id = parseInt(track.id.split('-')[1]);
-        dragging = { id, rect: track.getBoundingClientRect() };
-        document.body.style.cursor = 'grabbing';
-        const pct = 100 - ((e.clientY - dragging.rect.top) / dragging.rect.height * 100);
-        faders[id].value = Math.max(0, Math.min(100, Math.round(pct)));
-        checkMasking(); updateDisplay();
-        e.preventDefault();
-      }
+
+    function getColor(c,i){return mode==='colorblind'?CB[i%4]:mode==='synesthesia'?`hsl(${(i*90+t*2)%360},80%,55%)`:c}
+    function spectrum(ch,i){const s=[],[fs,fe]=ch.freq,ctr=(fs+fe)/2;for(let j=0;j<24;j++){const d=Math.abs(j-ctr),w=(fe-fs)/2,pk=Math.max(0,1-(d/w)*0.8),n=Math.sin(t*0.25+j*0.6+i*2)*0.15;s.push(Math.max(0.03,Math.min(1,(pk+n)*(ch.val/100)*(ch.muted?0.1:1))))}return s}
+    function getMasking(){if(!showMasking)return{};const p={};for(let i=0;i<CH.length;i++)for(let j=i+1;j<CH.length;j++){const a=CH[i],b=CH[j];if(a.muted||b.muted)continue;if(!(a.freq[1]<b.freq[0]||b.freq[1]<a.freq[0])&&Math.abs(a.val-b.val)<25)p[`${i}-${j}`]=true}return p}
+    function partners(i,mp){const p=[];for(const k in mp){const[a,b]=k.split('-').map(Number);if(a===i)p.push(CH[b].name);if(b===i)p.push(CH[a].name)}return p}
+    function checkMasking(){render()}
+
+    function render(){
+      const mixer=document.getElementById('mixer');
+      const mp=getMasking();
+      let html='';
+      CH.forEach((ch,i)=>{
+        const c=getColor(ch.color,i),sp=spectrum(ch,i),pr=partners(i,mp),isMask=pr.length>0;
+        html+=`<div class="channel${isMask?' masking':<!DOCTYPE html>
+                                    <html lang="en">
+                                    <head>
+                                    <meta charset="UTF-8">
+                                    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+                                    <meta name="apple-mobile-web-app-capable" content="yes">
+                                    <meta name="mobile-web-app-capable" content="yes">
+                                    <title>OHLA Prototype</title>
+                                    <style>
+                                    *{margin:0;padding:0;box-sizing:border-box}
+                                    body{font-family:-apple-system,system-ui,sans-serif;background:linear-gradient(135deg,#0a0a12,#1a1025,#0a0a12);min-height:100vh;color:#fff;user-select:none;-webkit-user-select:none;overflow-x:hidden}
+                                    .container{padding:16px;max-width:600px;margin:0 auto}
+                                    h1{text-align:center;font-size:28px;font-weight:300;letter-spacing:0.3em;background:linear-gradient(90deg,#FF6B35,#4ECDC4,#A855F7,#F59E0B);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+                                    .subtitle{text-align:center;font-size:10px;color:#666;letter-spacing:0.2em;margin-bottom:16px}
+                                    .controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:12px}
+                                    .mode-btn{padding:8px 14px;font-size:11px;border-radius:20px;border:2px solid #444;background:#1a1a2e;color:#999;cursor:pointer;transition:all 0.2s}
+                                    .mode-btn.active{border-color:#a855f7;background:rgba(168,85,247,0.2);color:#fff}
+                                    .play-btn{padding:10px 24px;font-size:13px;border-radius:20px;border:2px solid #22c55e;background:rgba(34,197,94,0.2);color:#86efac;cursor:pointer;font-weight:500}
+                                    .play-btn.playing{border-color:#ef4444;background:rgba(239,68,68,0.2);color:#fca5a5}
+                                    .options{display:flex;justify-content:center;gap:16px;margin-bottom:16px;font-size:11px;color:#888}
+                                    .options label{display:flex;align-items:center;gap:6px;cursor:pointer}
+                                    .haptic-btn{padding:6px 14px;border-radius:16px;border:1px solid #f97316;background:rgba(249,115,22,0.15);color:#fdba74;cursor:pointer;font-size:11px}
+                                    .haptic-btn.on{border-color:#10b981;background:rgba(16,185,129,0.15);color:#6ee7b7}
+                                    .mixer{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+                                    .channel{background:linear-gradient(145deg,rgba(30,30,45,0.95),rgba(15,15,25,0.98));border-radius:16px;padding:12px;border:1px solid rgba(255,255,255,0.08);transition:border-color 0.3s,box-shadow 0.3s}
+                                    .channel.masking{border-color:rgba(239,68,68,0.4);box-shadow:0 0 20px rgba(239,68,68,0.15)}
+                                    .ch-name{text-align:center;font-size:13px;font-weight:500;margin-bottom:8px}
+                                    .pan-row{display:flex;flex-direction:column;align-items:center;margin-bottom:8px}
+                                    .pan-labels{display:flex;justify-content:space-between;width:40px;font-size:9px;color:#666;margin-bottom:4px}
+                                    .pan-knob{width:36px;height:36px;border-radius:50%;background:linear-gradient(145deg,#1a1a2e,#0f0f1a);position:relative;cursor:pointer}
+                                    .pan-indicator{position:absolute;width:4px;height:10px;background:#fff;border-radius:2px;top:4px;left:50%;transform:translateX(-50%);transform-origin:center 14px}
+                                    .pan-value{font-size:9px;color:#888;margin-top:4px}
+                                    .track{width:56px;height:220px;background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.7));border-radius:10px;position:relative;overflow:hidden;cursor:ns-resize}
+                                    .spectrum{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:flex-end;justify-content:space-around;padding:0 2px 4px}
+                                    .bar{width:3px;background:#fff;border-radius:1px 1px 0 0;transition:height 0.05s}
+                                    .cap{position:absolute;left:4px;right:4px;height:28px;background:linear-gradient(180deg,#2a2a3e,#1a1a2e);border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;transition:bottom 0.05s}
+                                    .grip{display:flex;flex-direction:column;gap:2px}
+                                    .grip-line{width:20px;height:2px;background:rgba(255,255,255,0.4);border-radius:1px}
+                                    .db-scale{position:absolute;right:2px;top:8px;bottom:8px;display:flex;flex-direction:column;justify-content:space-between;font-size:7px;color:#555}
+                                    .mask-badge{position:absolute;top:4px;left:4px;right:4px;background:rgba(239,68,68,0.9);color:#fff;font-size:7px;padding:2px 4px;border-radius:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+                                    .value{text-align:center;font-size:16px;font-family:monospace;margin-top:8px}
+                                    .buttons{display:flex;justify-content:center;gap:4px;margin-top:8px}
+                                    .btn{width:26px;height:26px;border-radius:4px;border:1px solid #444;background:transparent;color:#666;font-size:10px;cursor:pointer}
+                                    .btn.active-m{border-color:#ef4444;background:rgba(239,68,68,0.2);color:#fca5a5}
+                                    .btn.active-s{border-color:#eab308;background:rgba(234,179,8,0.2);color:#fde047}
+                                    .master{background:linear-gradient(145deg,rgba(40,30,55,0.95),rgba(20,15,35,0.98))}
+                                    .master .ch-name{color:rgba(255,255,255,0.6)}
+                                    .master .track{width:36px}
+                                    .master .cap{border-color:rgba(255,255,255,0.3)}
+                                    .meter{position:absolute;bottom:0;left:6px;right:6px;background:linear-gradient(to top,#22c55e,#eab308,#ef4444);border-radius:4px;opacity:0.5}
+                                    footer{text-align:center;margin-top:20px;font-size:9px;color:#444}
+                                    </style>
+                                    </head>
+                                    <body>
+                                    <div class="container">
+                                    <h1>OHLA</h1>
+                                    <p class="subtitle">OPTO-HAPTIC LINEAR ATTENUATOR</p>
+
+                                    <div class="controls" id="modes"></div>
+
+                                    <div class="controls">
+                                    <button class="play-btn" id="playBtn" onclick="togglePlay()">▶ Play Demo</button>
+                                    </div>
+
+                                    <div class="options">
+                                    <label><input type="checkbox" id="maskChk" checked onchange="showMasking=this.checked;checkMasking()"> Masking</label>
+                                    <button class="haptic-btn" id="hapticBtn" onclick="enableHaptics()">🔊 Haptics</button>
+                                    </div>
+
+                                    <div class="mixer" id="mixer"></div>
+
+                                    <footer>OHLA • Patent Pending • © 2025 Mia Fanelli</footer>
+                                    </div>
+
+                                    <script>
+                                    const CH=[
+                                    {id:0,name:'Kick',color:'#FF6B35',freq:[0,6],val:75,pan:0,muted:false,solo:false},
+                                    {id:1,name:'Bass',color:'#4ECDC4',freq:[2,10],val:68,pan:0,muted:false,solo:false},
+                                    {id:2,name:'Synth',color:'#A855F7',freq:[8,18],val:55,pan:-30,muted:false,solo:false},
+                                    {id:3,name:'Vocal',color:'#F59E0B',freq:[10,22],val:82,pan:15,muted:false,solo:false}
+                                    ];
+                                    let master=85,mode='standard',showMasking=true,hapticsOn=false,playing=false,t=0,ctx=null,gains=[],pans=[],masterGain=null,loopId=null,drag=null;
+                                    const MODES=[{k:'standard',l:'◉ Standard'},{k:'blind',l:'◐ Tactile'},{k:'deaf',l:'◨ High Contrast'},{k:'colorblind',l:'◑ CB Safe'},{k:'synesthesia',l:'◎ Synesthesia'}];
+                                    const CB=['#0077BB','#EE7733','#009988','#CC3311'];
+
+                                    function initAudio(){if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume()}
+
+                                    function haptic(pattern,freq,dur,type){
+                                    if(!hapticsOn)return;
+                                    // Android/Chrome vibration - use array pattern
+                                    if(navigator.vibrate){
+                                    try{
+                                    const vp=Array.isArray(pattern)?pattern:[pattern];
+                                    navigator.vibrate(vp);
+                                    }catch(e){}
+                                    }
+                                    // Audio-based haptic fallback for iOS and all platforms
+                                    if(ctx){
+                                    try{
+                                    const o=ctx.createOscillator(),g=ctx.createGain();
+                                    o.type=type||'sine';
+                                    o.frequency.value=freq||200;
+                                    g.gain.setValueAtTime(0.15,ctx.currentTime);
+                                    g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+(dur||0.1));
+                                    o.connect(g);g.connect(ctx.destination);
+                                    o.start();o.stop(ctx.currentTime+(dur||0.1));
+                                    }catch(e){}
+                                    }
+                                    }
+
+                                    function getColor(c,i){return mode==='colorblind'?CB[i%4]:mode==='synesthesia'?`hsl(${(i*90+t*2)%360},80%,55%)`:c}
+                                    function spectrum(ch,i){const s=[],[fs,fe]=ch.freq,ctr=(fs+fe)/2;for(let j=0;j<24;j++){const d=Math.abs(j-ctr),w=(fe-fs)/2,pk=Math.max(0,1-(d/w)*0.8),n=Math.sin(t*0.25+j*0.6+i*2)*0.15;s.push(Math.max(0.03,Math.min(1,(pk+n)*(ch.val/100)*(ch.muted?0.1:1))))}return s}
+                                    function getMasking(){if(!showMasking)return{};const p={};for(let i=0;i<CH.length;i++)for(let j=i+1;j<CH.length;j++){const a=CH[i],b=CH[j];if(a.muted||b.muted)continue;if(!(a.freq[1]<b.freq[0]||b.freq[1]<a.freq[0])&&Math.abs(a.val-b.val)<25)p[`${i}-${j}`]=true}return p}
+                                    function partners(i,mp){const p=[];for(const k in mp){const[a,b]=k.split('-').map(Number);if(a===i)p.push(CH[b].name);if(b===i)p.push(CH[a].name)}return p}
+                                    function checkMasking(){render()}
+
+                                    function render(){
+                                    const mixer=document.getElementById('mixer');
+                                    const mp=getMasking();
+                                    let html='';
+                                    CH.forEach((ch,i)=>{
+                                    const c=getColor(ch.color,i),sp=spectrum(ch,i),pr=partners(i,mp),isMask=pr.length>0;
+                                    html+=`<div class="channel${isMask?' masking':''}" style="border-color:${isMask?c+'66':'rgba(255,255,255,0.08)'}" data-id="${i}">
+        <div class="ch-name" style="color:${c}">${ch.name}</div>
+      <div class="pan-row"><div class="pan-labels"><span>L</span><span>R</span></div>
+      <div class="pan-knob" style="border:2px solid ${c}" data-pan="${i}"><div class="pan-indicator" style="background:${c};transform:translateX(-50%) rotate(${ch.pan*1.35}deg)"></div></div>
+        <div class="pan-value">${Math.abs(ch.pan)<3?'C':ch.pan<0?'L'+Math.abs(Math.round(ch.pan)):'R'+Math.round(ch.pan)}</div></div>
+        <div class="track" style="border:1px solid ${c}22" data-track="${i}">
+        <div class="spectrum">${sp.map((v,j)=>`<div class="bar" style="height:${Math.max(3,v*100)}%;background:${mode==='blind'?'transparent':mode==='synesthesia'?`hsl(${(j*15+t*3)%360},90%,55%)`:c}"></div>`).join('')}</div>
+      <div class="cap" style="bottom:${ch.val}%;transform:translateY(50%);border-color:${c}"><div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div></div>
+      <div class="db-scale"><span>+10</span><span>0</span><span>-∞</span></div>
+        ${isMask?`<div class="mask-badge">⚠ ${pr.join(', ')}</div>`:''}
+      ${mode==='blind'?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:rgba(255,255,255,0.8)">${isMask?'◉◉◉':'○'}</div>`:''}
+      </div>
+      <div class="value">${ch.val}</div>
+      <div class="buttons"><button class="btn${ch.muted?' active-m':''}" onclick="toggleM(${i})">M</button><button class="btn${ch.solo?' active-s':''}" onclick="toggleS(${i})">S</button></div>
+        </div>`;
     });
-    
-    document.addEventListener('mousemove', (e) => {
-      if (dragging) {
-        const pct = 100 - ((e.clientY - dragging.rect.top) / dragging.rect.height * 100);
-        const newValue = Math.max(0, Math.min(100, Math.round(pct)));
-        if (Math.abs(newValue - faders[dragging.id].value) >= 5) triggerDragFeedback();
-        faders[dragging.id].value = newValue;
-        checkMasking(); updateDisplay();
-      }
-    });
-    
-    document.addEventListener('mouseup', () => { dragging = null; document.body.style.cursor = 'default'; });
-    
-    // Touch drag
-    document.addEventListener('touchstart', (e) => {
-      const track = e.target.closest('.fader-track');
-      if (track) {
-        const id = parseInt(track.id.split('-')[1]);
-        dragging = { id, rect: track.getBoundingClientRect() };
-        const pct = 100 - ((e.touches[0].clientY - dragging.rect.top) / dragging.rect.height * 100);
-        faders[id].value = Math.max(0, Math.min(100, Math.round(pct)));
-        checkMasking(); updateDisplay();
-        e.preventDefault();
-      }
-    }, { passive: false });
-    
-    document.addEventListener('touchmove', (e) => {
-      if (dragging) {
-        const pct = 100 - ((e.touches[0].clientY - dragging.rect.top) / dragging.rect.height * 100);
-        const newValue = Math.max(0, Math.min(100, Math.round(pct)));
-        if (Math.abs(newValue - faders[dragging.id].value) >= 5) triggerDragFeedback();
-        faders[dragging.id].value = newValue;
-        checkMasking(); updateDisplay();
-        e.preventDefault();
-      }
-    }, { passive: false });
-    
-    document.addEventListener('touchend', () => { dragging = null; });
-    
-    // Mode buttons
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        mode = btn.dataset.mode;
-      });
-    });
-    
-    document.getElementById('maskingToggle').addEventListener('change', (e) => { showMasking = e.target.checked; checkMasking(); });
-    
-    document.getElementById('hapticBtn').addEventListener('click', function() {
-      hapticsEnabled = true;
-      this.textContent = '✓ Sound + Haptics ON';
-      this.classList.add('enabled');
+    html+=`<div class="channel master"><div class="ch-name">MST</div><div style="height:52px"></div>
+    <div class="track" data-master="1"><div class="meter" style="height:${master*0.9}%"></div>
+    <div class="cap" style="bottom:${master}%;transform:translateY(50%)"><div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div></div></div>
+    <div class="value">${master}</div></div>`;
+    mixer.innerHTML=html;
+    }
+
+    function renderModes(){
+      document.getElementById('modes').innerHTML=MODES.map(m=>`<button class="mode-btn${mode===m.k?' active':''}" onclick="setMode('${m.k}')">${m.l}</button>`).join('');
+    }
+    function setMode(m){mode=m;renderModes();render()}
+    function toggleM(i){CH[i].muted=!CH[i].muted;updateGains();render()}
+    function toggleS(i){CH[i].solo=!CH[i].solo;render()}
+    function enableHaptics(){
       initAudio();
-      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-      if ('vibrate' in navigator) navigator.vibrate([30, 30, 30]);
-      if (audioCtx) {
-        const test = audioCtx.createOscillator(), testGain = audioCtx.createGain();
-        test.frequency.value = 440; testGain.gain.value = 0.1;
-        test.connect(testGain); testGain.connect(audioCtx.destination);
-        test.start(); testGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
-        test.stop(audioCtx.currentTime + 0.2);
-      }
+      hapticsOn=true;
+      document.getElementById('hapticBtn').className='haptic-btn on';
+      document.getElementById('hapticBtn').textContent='✓ Haptics ON';
+      haptic([20,20,20],440,0.15,'sine');
+    }
+
+    function updateGains(){CH.forEach((ch,i)=>{if(gains[i])gains[i].gain.value=ch.muted?0:ch.val/100;if(pans[i])pans[i].pan.value=ch.pan/100});if(masterGain)masterGain.gain.value=master/100}
+
+    function startAudio(){
+      initAudio();masterGain=ctx.createGain();masterGain.gain.value=master/100;masterGain.connect(ctx.destination);
+      gains=[];pans=[];
+      CH.forEach(ch=>{const g=ctx.createGain(),p=ctx.createStereoPanner();g.gain.value=ch.muted?0:ch.val/100;p.pan.value=ch.pan/100;g.connect(p);p.connect(masterGain);gains.push(g);pans.push(p)});
+      const bassN=[55,55,73.4,65.4],synthN=[220,261.6,293.7,261.6];let beat=0;
+      const playBeat=()=>{
+        if(!CH[0].muted){const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(150,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(60,ctx.currentTime+0.05);g.gain.setValueAtTime(0.8,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.3);o.connect(g);g.connect(gains[0]);o.start();o.stop(ctx.currentTime+0.3)}
+        if(!CH[1].muted){const o=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain();o.type='sawtooth';o.frequency.value=bassN[beat%4];f.type='lowpass';f.frequency.value=400;f.Q.value=2;g.gain.setValueAtTime(0.5,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.4);o.connect(f);f.connect(g);g.connect(gains[1]);o.start();o.stop(ctx.currentTime+0.4)}
+        if(beat%2===0&&!CH[2].muted){const o1=ctx.createOscillator(),o2=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain();o1.type=o2.type='sawtooth';o1.frequency.value=synthN[beat%4];o2.frequency.value=synthN[beat%4]*1.005;f.type='lowpass';f.frequency.setValueAtTime(800,ctx.currentTime);f.frequency.exponentialRampToValueAtTime(2000,ctx.currentTime+0.1);f.frequency.exponentialRampToValueAtTime(400,ctx.currentTime+0.5);g.gain.setValueAtTime(0.25,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.5);o1.connect(f);o2.connect(f);f.connect(g);g.connect(gains[2]);o1.start();o2.start();o1.stop(ctx.currentTime+0.5);o2.stop(ctx.currentTime+0.5)}
+        if(beat%4===0&&!CH[3].muted){const buf=ctx.createBuffer(1,ctx.sampleRate*0.6,ctx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const n=ctx.createBufferSource();n.buffer=buf;const f1=ctx.createBiquadFilter(),f2=ctx.createBiquadFilter(),g=ctx.createGain();f1.type=f2.type='bandpass';f1.frequency.value=800;f2.frequency.value=1200;f1.Q.value=f2.Q.value=5;g.gain.setValueAtTime(0.4,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.6);n.connect(f1);n.connect(f2);f1.connect(g);f2.connect(g);g.connect(gains[3]);n.start();n.stop(ctx.currentTime+0.6)}
+        beat++};
+      playBeat();loopId=setInterval(playBeat,500)}
+    function stopAudio(){if(loopId){clearInterval(loopId);loopId=null}}
+    function togglePlay(){playing=!playing;const btn=document.getElementById('playBtn');if(playing){startAudio();btn.textContent='⏹ Stop';btn.className='play-btn playing'}else{stopAudio();btn.textContent='▶ Play Demo';btn.className='play-btn'}}
+
+    document.addEventListener('mousedown',e=>{
+      const tr=e.target.closest('[data-track]');if(tr){const i=+tr.dataset.track,r=tr.getBoundingClientRect();drag={type:'fader',i,r};const p=100-((e.clientY-r.top)/r.height*100);CH[i].val=Math.max(0,Math.min(100,Math.round(p)));haptic([15],150,0.05);updateGains();render()}
+      const ms=e.target.closest('[data-master]');if(ms){const r=ms.getBoundingClientRect();drag={type:'master',r};const p=100-((e.clientY-r.top)/r.height*100);master=Math.max(0,Math.min(100,Math.round(p)));haptic([15],120,0.05);updateGains();render()}
+      const kn=e.target.closest('[data-pan]');if(kn){const i=+kn.dataset.pan,r=kn.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;drag={type:'pan',i,cx,cy,startPan:CH[i].pan,startAngle:Math.atan2(e.clientY-cy,e.clientX-cx)}}
     });
-    
-    setInterval(() => { time++; updateDisplay(); }, 50);
-    buildFaders(); updateDisplay();
+    document.addEventListener('mousemove',e=>{if(!drag)return;
+                                              if(drag.type==='fader'){const p=100-((e.clientY-drag.r.top)/drag.r.height*100);CH[drag.i].val=Math.max(0,Math.min(100,Math.round(p)));updateGains();render()}
+                                              if(drag.type==='master'){const p=100-((e.clientY-drag.r.top)/drag.r.height*100);master=Math.max(0,Math.min(100,Math.round(p)));updateGains();render()}
+                                              if(drag.type==='pan'){const ca=Math.atan2(e.clientY-drag.cy,e.clientX-drag.cx),ad=(ca-drag.startAngle)*(180/Math.PI);let np=Math.max(-100,Math.min(100,drag.startPan+ad));const op=CH[drag.i].pan;if(Math.abs(np)<5&&Math.abs(op)>=5){np=0;haptic([25],1200,0.03)}CH[drag.i].pan=np;updateGains();render()}
+                                             });
+    document.addEventListener('mouseup',()=>drag=null);
+    document.addEventListener('touchstart',e=>{
+      const tr=e.target.closest('[data-track]');if(tr){const i=+tr.dataset.track,r=tr.getBoundingClientRect();drag={type:'fader',i,r};const p=100-((e.touches[0].clientY-r.top)/r.height*100);CH[i].val=Math.max(0,Math.min(100,Math.round(p)));haptic([15],150,0.05);updateGains();render();e.preventDefault()}
+      const ms=e.target.closest('[data-master]');if(ms){const r=ms.getBoundingClientRect();drag={type:'master',r};const p=100-((e.touches[0].clientY-r.top)/r.height*100);master=Math.max(0,Math.min(100,Math.round(p)));haptic([15],120,0.05);updateGains();render();e.preventDefault()}
+      const kn=e.target.closest('[data-pan]');if(kn){const i=+kn.dataset.pan,r=kn.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;drag={type:'pan',i,cx,cy,startPan:CH[i].pan,startAngle:Math.atan2(e.touches[0].clientY-cy,e.touches[0].clientX-cx)};e.preventDefault()}
+    },{passive:false});
+    document.addEventListener('touchmove',e=>{if(!drag)return;const touch=e.touches[0];
+                                              if(drag.type==='fader'){const p=100-((touch.clientY-drag.r.top)/drag.r.height*100);CH[drag.i].val=Math.max(0,Math.min(100,Math.round(p)));haptic([10],180,0.03);updateGains();render()}
+                                              if(drag.type==='master'){const p=100-((touch.clientY-drag.r.top)/drag.r.height*100);master=Math.max(0,Math.min(100,Math.round(p)));haptic([10],140,0.03);updateGains();render()}
+                                              if(drag.type==='pan'){const ca=Math.atan2(touch.clientY-drag.cy,touch.clientX-drag.cx),ad=(ca-drag.startAngle)*(180/Math.PI);let np=Math.max(-100,Math.min(100,drag.startPan+ad));if(Math.abs(np)<5&&Math.abs(CH[drag.i].pan)>=5){np=0;haptic([25],1200,0.03)}CH[drag.i].pan=np;updateGains();render()}
+                                              e.preventDefault()},{passive:false});
+    document.addEventListener('touchend',()=>drag=null);
+
+    setInterval(()=>{t++;render()},40);
+    renderModes();render();
   </script>
-</body>
-</html>
+  </body>
+</html>html>
+  </script></footer></label></h1>
+  </body>
+  </style></title>
+  </head>
