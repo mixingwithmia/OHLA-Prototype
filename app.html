@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>OHLA Prototype</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,system-ui,sans-serif;background:linear-gradient(135deg,#0a0a12,#1a1025,#0a0a12);min-height:100vh;color:#fff;user-select:none;-webkit-user-select:none;overflow-x:hidden}
+.container{padding:16px;max-width:600px;margin:0 auto}
+h1{text-align:center;font-size:28px;font-weight:300;letter-spacing:0.3em;background:linear-gradient(90deg,#FF6B35,#4ECDC4,#A855F7,#F59E0B);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+.subtitle{text-align:center;font-size:10px;color:#666;letter-spacing:0.2em;margin-bottom:16px}
+.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:12px}
+.mode-btn{padding:8px 14px;font-size:11px;border-radius:20px;border:2px solid #444;background:#1a1a2e;color:#999;cursor:pointer;transition:all 0.2s}
+.mode-btn.active{border-color:#a855f7;background:rgba(168,85,247,0.2);color:#fff}
+.play-btn{padding:10px 24px;font-size:13px;border-radius:20px;border:2px solid #22c55e;background:rgba(34,197,94,0.2);color:#86efac;cursor:pointer;font-weight:500}
+.play-btn.playing{border-color:#ef4444;background:rgba(239,68,68,0.2);color:#fca5a5}
+.options{display:flex;justify-content:center;gap:16px;margin-bottom:16px;font-size:11px;color:#888}
+.options label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.haptic-btn{padding:6px 14px;border-radius:16px;border:1px solid #f97316;background:rgba(249,115,22,0.15);color:#fdba74;cursor:pointer;font-size:11px}
+.haptic-btn.on{border-color:#10b981;background:rgba(16,185,129,0.15);color:#6ee7b7}
+.mixer{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.channel{background:linear-gradient(145deg,rgba(30,30,45,0.95),rgba(15,15,25,0.98));border-radius:16px;padding:12px;border:1px solid rgba(255,255,255,0.08);transition:border-color 0.3s,box-shadow 0.3s}
+.channel.masking{border-color:rgba(239,68,68,0.4);box-shadow:0 0 20px rgba(239,68,68,0.15)}
+.ch-name{text-align:center;font-size:13px;font-weight:500;margin-bottom:8px}
+.pan-row{display:flex;flex-direction:column;align-items:center;margin-bottom:8px}
+.pan-labels{display:flex;justify-content:space-between;width:40px;font-size:9px;color:#666;margin-bottom:4px}
+.pan-knob{width:36px;height:36px;border-radius:50%;background:linear-gradient(145deg,#1a1a2e,#0f0f1a);position:relative;cursor:pointer}
+.pan-indicator{position:absolute;width:4px;height:10px;background:#fff;border-radius:2px;top:4px;left:50%;transform:translateX(-50%);transform-origin:center 14px}
+.pan-value{font-size:9px;color:#888;margin-top:4px}
+.track{width:56px;height:220px;background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.7));border-radius:10px;position:relative;overflow:hidden;cursor:ns-resize}
+.spectrum{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:flex-end;justify-content:space-around;padding:0 2px 4px}
+.bar{width:3px;background:#fff;border-radius:1px 1px 0 0;transition:height 0.05s}
+.cap{position:absolute;left:4px;right:4px;height:28px;background:linear-gradient(180deg,#2a2a3e,#1a1a2e);border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;transition:bottom 0.05s}
+.grip{display:flex;flex-direction:column;gap:2px}
+.grip-line{width:20px;height:2px;background:rgba(255,255,255,0.4);border-radius:1px}
+.db-scale{position:absolute;right:2px;top:8px;bottom:8px;display:flex;flex-direction:column;justify-content:space-between;font-size:7px;color:#555}
+.mask-badge{position:absolute;top:4px;left:4px;right:4px;background:rgba(239,68,68,0.9);color:#fff;font-size:7px;padding:2px 4px;border-radius:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.value{text-align:center;font-size:16px;font-family:monospace;margin-top:8px}
+.buttons{display:flex;justify-content:center;gap:4px;margin-top:8px}
+.btn{width:26px;height:26px;border-radius:4px;border:1px solid #444;background:transparent;color:#666;font-size:10px;cursor:pointer}
+.btn.active-m{border-color:#ef4444;background:rgba(239,68,68,0.2);color:#fca5a5}
+.btn.active-s{border-color:#eab308;background:rgba(234,179,8,0.2);color:#fde047}
+.master{background:linear-gradient(145deg,rgba(40,30,55,0.95),rgba(20,15,35,0.98))}
+.master .ch-name{color:rgba(255,255,255,0.6)}
+.master .track{width:36px}
+.master .cap{border-color:rgba(255,255,255,0.3)}
+.meter{position:absolute;bottom:0;left:6px;right:6px;background:linear-gradient(to top,#22c55e,#eab308,#ef4444);border-radius:4px;opacity:0.5}
+footer{text-align:center;margin-top:20px;font-size:9px;color:#444}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>OHLA</h1>
+<p class="subtitle">OPTO-HAPTIC LINEAR ATTENUATOR</p>
+
+<div class="controls" id="modes"></div>
+
+<div class="controls">
+<button class="play-btn" id="playBtn" onclick="togglePlay()">▶ Play Demo</button>
+</div>
+
+<div class="options">
+<label><input type="checkbox" id="maskChk" checked onchange="showMasking=this.checked;checkMasking()"> Masking</label>
+<button class="haptic-btn" id="hapticBtn" onclick="enableHaptics()">🔊 Haptics</button>
+</div>
+
+<div class="mixer" id="mixer"></div>
+
+<footer>OHLA • Patent Pending • © 2025 Mia Fanelli</footer>
+</div>
+
+<script>
+const CH=[
+{id:0,name:'Kick',color:'#FF6B35',freq:[0,6],val:75,pan:0,muted:false,solo:false},
+{id:1,name:'Bass',color:'#4ECDC4',freq:[2,10],val:68,pan:0,muted:false,solo:false},
+{id:2,name:'Synth',color:'#A855F7',freq:[8,18],val:55,pan:-30,muted:false,solo:false},
+{id:3,name:'Vocal',color:'#F59E0B',freq:[10,22],val:82,pan:15,muted:false,solo:false}
+];
+let master=85,mode='standard',showMasking=true,hapticsOn=false,playing=false,t=0,ctx=null,gains=[],pans=[],masterGain=null,loopId=null,drag=null;
+const MODES=[{k:'standard',l:'◉ Standard'},{k:'blind',l:'◐ Tactile'},{k:'deaf',l:'◨ High Contrast'},{k:'colorblind',l:'◑ CB Safe'},{k:'synesthesia',l:'◎ Synesthesia'}];
+const CB=['#0077BB','#EE7733','#009988','#CC3311'];
+
+function initAudio(){if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume()}
+function haptic(p,f,d,type='sine'){if(!hapticsOn)return;if(navigator.vibrate)navigator.vibrate(p);if(ctx){const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0.08,ctx.currentTime);g.gain.linearRampToValueAtTime(0,ctx.currentTime+d);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+d)}}
+
+function getColor(c,i){return mode==='colorblind'?CB[i%4]:mode==='synesthesia'?`hsl(${(i*90+t*2)%360},80%,55%)`:c}
+function spectrum(ch,i){const s=[],[fs,fe]=ch.freq,ctr=(fs+fe)/2;for(let j=0;j<24;j++){const d=Math.abs(j-ctr),w=(fe-fs)/2,pk=Math.max(0,1-(d/w)*0.8),n=Math.sin(t*0.25+j*0.6+i*2)*0.15;s.push(Math.max(0.03,Math.min(1,(pk+n)*(ch.val/100)*(ch.muted?0.1:1))))}return s}
+function getMasking(){if(!showMasking)return{};const p={};for(let i=0;i<CH.length;i++)for(let j=i+1;j<CH.length;j++){const a=CH[i],b=CH[j];if(a.muted||b.muted)continue;if(!(a.freq[1]<b.freq[0]||b.freq[1]<a.freq[0])&&Math.abs(a.val-b.val)<25)p[`${i}-${j}`]=true}return p}
+function partners(i,mp){const p=[];for(const k in mp){const[a,b]=k.split('-').map(Number);if(a===i)p.push(CH[b].name);if(b===i)p.push(CH[a].name)}return p}
+function checkMasking(){render()}
+
+function render(){
+const mixer=document.getElementById('mixer');
+const mp=getMasking();
+let html='';
+CH.forEach((ch,i)=>{
+const c=getColor(ch.color,i),sp=spectrum(ch,i),pr=partners(i,mp),isMask=pr.length>0;
+html+=`<div class="channel${isMask?' masking':''}" style="border-color:${isMask?c+'66':'rgba(255,255,255,0.08)'}" data-id="${i}">
+<div class="ch-name" style="color:${c}">${ch.name}</div>
+<div class="pan-row"><div class="pan-labels"><span>L</span><span>R</span></div>
+<div class="pan-knob" style="border:2px solid ${c}" data-pan="${i}"><div class="pan-indicator" style="background:${c};transform:translateX(-50%) rotate(${ch.pan*1.35}deg)"></div></div>
+<div class="pan-value">${Math.abs(ch.pan)<3?'C':ch.pan<0?'L'+Math.abs(Math.round(ch.pan)):'R'+Math.round(ch.pan)}</div></div>
+<div class="track" style="border:1px solid ${c}22" data-track="${i}">
+<div class="spectrum">${sp.map((v,j)=>`<div class="bar" style="height:${Math.max(3,v*100)}%;background:${mode==='blind'?'transparent':mode==='synesthesia'?`hsl(${(j*15+t*3)%360},90%,55%)`:c}"></div>`).join('')}</div>
+<div class="cap" style="bottom:${ch.val}%;transform:translateY(50%);border-color:${c}"><div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div></div>
+<div class="db-scale"><span>+10</span><span>0</span><span>-∞</span></div>
+${isMask?`<div class="mask-badge">⚠ ${pr.join(', ')}</div>`:''}
+${mode==='blind'?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:rgba(255,255,255,0.8)">${isMask?'◉◉◉':'○'}</div>`:''}
+</div>
+<div class="value">${ch.val}</div>
+<div class="buttons"><button class="btn${ch.muted?' active-m':''}" onclick="toggleM(${i})">M</button><button class="btn${ch.solo?' active-s':''}" onclick="toggleS(${i})">S</button></div>
+</div>`;
+});
+html+=`<div class="channel master"><div class="ch-name">MST</div><div style="height:52px"></div>
+<div class="track" data-master="1"><div class="meter" style="height:${master*0.9}%"></div>
+<div class="cap" style="bottom:${master}%;transform:translateY(50%)"><div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div></div></div>
+<div class="value">${master}</div></div>`;
+mixer.innerHTML=html;
+}
+
+function renderModes(){
+document.getElementById('modes').innerHTML=MODES.map(m=>`<button class="mode-btn${mode===m.k?' active':''}" onclick="setMode('${m.k}')">${m.l}</button>`).join('');
+}
+function setMode(m){mode=m;renderModes();render()}
+function toggleM(i){CH[i].muted=!CH[i].muted;updateGains();render()}
+function toggleS(i){CH[i].solo=!CH[i].solo;render()}
+function enableHaptics(){initAudio();hapticsOn=true;document.getElementById('hapticBtn').className='haptic-btn on';document.getElementById('hapticBtn').textContent='✓ Haptics ON';haptic([30,30,30],440,0.2)}
+
+function updateGains(){CH.forEach((ch,i)=>{if(gains[i])gains[i].gain.value=ch.muted?0:ch.val/100;if(pans[i])pans[i].pan.value=ch.pan/100});if(masterGain)masterGain.gain.value=master/100}
+
+function startAudio(){
+initAudio();masterGain=ctx.createGain();masterGain.gain.value=master/100;masterGain.connect(ctx.destination);
+gains=[];pans=[];
+CH.forEach(ch=>{const g=ctx.createGain(),p=ctx.createStereoPanner();g.gain.value=ch.muted?0:ch.val/100;p.pan.value=ch.pan/100;g.connect(p);p.connect(masterGain);gains.push(g);pans.push(p)});
+const bassN=[55,55,73.4,65.4],synthN=[220,261.6,293.7,261.6];let beat=0;
+const playBeat=()=>{
+if(!CH[0].muted){const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(150,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(60,ctx.currentTime+0.05);g.gain.setValueAtTime(0.8,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.3);o.connect(g);g.connect(gains[0]);o.start();o.stop(ctx.currentTime+0.3)}
+if(!CH[1].muted){const o=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain();o.type='sawtooth';o.frequency.value=bassN[beat%4];f.type='lowpass';f.frequency.value=400;f.Q.value=2;g.gain.setValueAtTime(0.5,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.4);o.connect(f);f.connect(g);g.connect(gains[1]);o.start();o.stop(ctx.currentTime+0.4)}
+if(beat%2===0&&!CH[2].muted){const o1=ctx.createOscillator(),o2=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain();o1.type=o2.type='sawtooth';o1.frequency.value=synthN[beat%4];o2.frequency.value=synthN[beat%4]*1.005;f.type='lowpass';f.frequency.setValueAtTime(800,ctx.currentTime);f.frequency.exponentialRampToValueAtTime(2000,ctx.currentTime+0.1);f.frequency.exponentialRampToValueAtTime(400,ctx.currentTime+0.5);g.gain.setValueAtTime(0.25,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.5);o1.connect(f);o2.connect(f);f.connect(g);g.connect(gains[2]);o1.start();o2.start();o1.stop(ctx.currentTime+0.5);o2.stop(ctx.currentTime+0.5)}
+if(beat%4===0&&!CH[3].muted){const buf=ctx.createBuffer(1,ctx.sampleRate*0.6,ctx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const n=ctx.createBufferSource();n.buffer=buf;const f1=ctx.createBiquadFilter(),f2=ctx.createBiquadFilter(),g=ctx.createGain();f1.type=f2.type='bandpass';f1.frequency.value=800;f2.frequency.value=1200;f1.Q.value=f2.Q.value=5;g.gain.setValueAtTime(0.4,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.6);n.connect(f1);n.connect(f2);f1.connect(g);f2.connect(g);g.connect(gains[3]);n.start();n.stop(ctx.currentTime+0.6)}
+beat++};
+playBeat();loopId=setInterval(playBeat,500)}
+function stopAudio(){if(loopId){clearInterval(loopId);loopId=null}}
+function togglePlay(){playing=!playing;const btn=document.getElementById('playBtn');if(playing){startAudio();btn.textContent='⏹ Stop';btn.className='play-btn playing'}else{stopAudio();btn.textContent='▶ Play Demo';btn.className='play-btn'}}
+
+document.addEventListener('mousedown',e=>{
+const tr=e.target.closest('[data-track]');if(tr){const i=+tr.dataset.track,r=tr.getBoundingClientRect();drag={type:'fader',i,r};const p=100-((e.clientY-r.top)/r.height*100);CH[i].val=Math.max(0,Math.min(100,Math.round(p)));updateGains();render()}
+const ms=e.target.closest('[data-master]');if(ms){const r=ms.getBoundingClientRect();drag={type:'master',r};const p=100-((e.clientY-r.top)/r.height*100);master=Math.max(0,Math.min(100,Math.round(p)));updateGains();render()}
+const kn=e.target.closest('[data-pan]');if(kn){const i=+kn.dataset.pan,r=kn.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;drag={type:'pan',i,cx,cy,startPan:CH[i].pan,startAngle:Math.atan2(e.clientY-cy,e.clientX-cx)}}
+});
+document.addEventListener('mousemove',e=>{if(!drag)return;
+if(drag.type==='fader'){const p=100-((e.clientY-drag.r.top)/drag.r.height*100);CH[drag.i].val=Math.max(0,Math.min(100,Math.round(p)));updateGains();render()}
+if(drag.type==='master'){const p=100-((e.clientY-drag.r.top)/drag.r.height*100);master=Math.max(0,Math.min(100,Math.round(p)));updateGains();render()}
+if(drag.type==='pan'){const ca=Math.atan2(e.clientY-drag.cy,e.clientX-drag.cx),ad=(ca-drag.startAngle)*(180/Math.PI);let np=Math.max(-100,Math.min(100,drag.startPan+ad));const op=CH[drag.i].pan;if(Math.abs(np)<5&&Math.abs(op)>=5){np=0;haptic(40,1200,0.02)}CH[drag.i].pan=np;updateGains();render()}
+});
+document.addEventListener('mouseup',()=>drag=null);
+document.addEventListener('touchstart',e=>{
+const tr=e.target.closest('[data-track]');if(tr){const i=+tr.dataset.track,r=tr.getBoundingClientRect();drag={type:'fader',i,r};const p=100-((e.touches[0].clientY-r.top)/r.height*100);CH[i].val=Math.max(0,Math.min(100,Math.round(p)));updateGains();render();e.preventDefault()}
+const ms=e.target.closest('[data-master]');if(ms){const r=ms.getBoundingClientRect();drag={type:'master',r};const p=100-((e.touches[0].clientY-r.top)/r.height*100);master=Math.max(0,Math.min(100,Math.round(p)));updateGains();render();e.preventDefault()}
+const kn=e.target.closest('[data-pan]');if(kn){const i=+kn.dataset.pan,r=kn.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;drag={type:'pan',i,cx,cy,startPan:CH[i].pan,startAngle:Math.atan2(e.touches[0].clientY-cy,e.touches[0].clientX-cx)};e.preventDefault()}
+},{passive:false});
+document.addEventListener('touchmove',e=>{if(!drag)return;const touch=e.touches[0];
+if(drag.type==='fader'){const p=100-((touch.clientY-drag.r.top)/drag.r.height*100);CH[drag.i].val=Math.max(0,Math.min(100,Math.round(p)));updateGains();render()}
+if(drag.type==='master'){const p=100-((touch.clientY-drag.r.top)/drag.r.height*100);master=Math.max(0,Math.min(100,Math.round(p)));updateGains();render()}
+if(drag.type==='pan'){const ca=Math.atan2(touch.clientY-drag.cy,touch.clientX-drag.cx),ad=(ca-drag.startAngle)*(180/Math.PI);let np=Math.max(-100,Math.min(100,drag.startPan+ad));if(Math.abs(np)<5&&Math.abs(CH[drag.i].pan)>=5){np=0;haptic(40,1200,0.02)}CH[drag.i].pan=np;updateGains();render()}
+e.preventDefault()},{passive:false});
+document.addEventListener('touchend',()=>drag=null);
+
+setInterval(()=>{t++;render()},40);
+renderModes();render();
+</script>
+</body>
+</html>
